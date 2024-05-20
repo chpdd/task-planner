@@ -1,0 +1,5 @@
+﻿Attr_names: name, deadline, interest, difficult, lead_time, must_do
+Task Examples:
+MPI C++, 27.05.2024, interest = 6, lead_time = 2, must_do = True
+OMP C++, 27.05.2024, interest = 7, lead_time = 1
+Python Multithreading, interest = 8, lead_time = 2, must_do = False
