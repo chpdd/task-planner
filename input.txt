@@ -1,3 +1,16 @@
 MPI C++, deadline=27.05.2024, interest = 6, lead_time = 2, must_do = True
 OMP C++, deadline=27.05.2024, interest = 7, lead_time = 1
-Python Multithreading, interest = 8, lead_time = 2, must_do = False
+Java parallel, deadline=27.05.2024, interest = 5, lead_time = 2
+WEB 5, deadline=28.05.2024, interest = 6, lead_time = 4
+WEB 6, deadline=28.05.2024, interest = 6, lead_time = 6
+WEB 7, deadline=28.05.2024, interest = 6, lead_time = 6
+WEB 8/Django site, deadline=28.05.2024, interest = 7, lead_time = 4
+Dif urav KR2, deadline=22.05.2024, interest = 2, lead_time = 4
+Dif urav KR1, deadline=22.05.2024, interest = 3, lead_time = 4
+Comp analyze KR3, deadline=27.05.2024, interest = 1, lead_time = 4
+Java spring tutor project, deadline=27.05.2024, interest = 5, lead_time = 6
+Java spring collective project, deadline=27.05.2024, interest = 4, lead_time = 6
+Python multithreading, interest = 7, lead_time = 4, must_do = False
+Python async, interest = 7, lead_time = 4, must_do = False
+Python algrtms, interest = 9, lead_time = 10, must_do = False
+Telegram bot, interest = 10, lead_time = 10
