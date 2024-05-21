@@ -1,5 +1,14 @@
-﻿Attr_names: name, deadline, interest, difficult, lead_time, must_do
-Task Examples:
-MPI C++, 27.05.2024, interest = 6, lead_time = 2, must_do = True
-OMP C++, 27.05.2024, interest = 7, lead_time = 1
-Python Multithreading, interest = 8, lead_time = 2, must_do = False
+﻿For task:
+Attr_names: name, deadline, interest, work_hours, must_do
+Examples:
+MPI C++, 27.05.2024, interest = 6, work_hours = 2, must_do = True
+OMP C++, 27.05.2024, interest = 7, work_hours = 1
+Python Multithreading, interest = 8, work_hours = 2, must_do = False
+
+For day:
+Attr_names: date, work_hours
+Examples:
+21.05.2024, work_hours=6
+
+
+
