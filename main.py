@@ -1,112 +1,7 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 
-
-class InvalidTaskError(Exception):
-    # error class for raise errors)))
-    pass
-
-
-class Task:
-    # work_hours in day
-    __day_work_hours = timedelta(hours=4)
-
-    def __init__(self, name: str, **kwargs):
-        # if (kwargs.get("deadline", None) is None
-        #         and kwargs.get("must_do", None) is None):
-        #     raise InvalidTaskError(
-        #         "You can't have deadline and must_do empty at the same time")
-
-        # Task name
-        self.__name = name
-
-        # Task deadline(default=actual date + 90 days)
-        if "deadline" in kwargs:
-            self.__deadline = datetime.strptime(kwargs["deadline"], "%d.%m.%Y")
-        else:
-            self.__deadline = datetime.now() + timedelta(days=90)
-
-        # interest from 1 to 10(default=5)
-        self.__interest = int(kwargs.get("interest", 5))
-
-        # lead time in hours(default=4 hours)
-        if "work_hours" in kwargs:
-            self.__work_hours = timedelta(hours=int(kwargs["work_hours"]))
-        else:
-            self.__work_hours = self.__day_work_hours
-
-        # Task must do(default=True)
-        self.__must_do = False if kwargs.get("must_do", None) == "False" else True
-
-    def __str__(self):
-        return (f"Task name: {self.__name}, deadline: {self.__deadline}, "
-                f"interest: {self.__interest}/10, work_hours: {self.__work_hours}, "
-                f"must_do: {self.__must_do} ")
-
-    def __repr__(self):
-        return (f"Task(name={self.__name}, deadline={self.__deadline}, "
-                f"interest={self.__interest}, work_hours={self.__work_hours}, "
-                f"must_do={self.__must_do})")
-
-    @property
-    def interest(self):
-        return self.__interest
-
-    @interest.setter
-    def interest(self, interest):
-        self.interest = interest
-
-    @property
-    def name(self):
-        return self.__name
-
-    @name.setter
-    def name(self, name):
-        self.__name = name
-
-    @property
-    def deadline(self):
-        return self.__deadline
-
-    @deadline.setter
-    def deadline(self, deadline):
-        self.__deadline = deadline
-
-    @property
-    def must_do(self):
-        return self.__must_do
-
-    @must_do.setter
-    def must_do(self, must_do):
-        self.__must_do = must_do
-
-
-class Day:
-    def __init__(self, date, **kwargs):
-        self.__date = date
-        # self.__weekend = True if kwargs.get("weekend", None) == "True" else: False
-        self.__work_hours = timedelta(hours=int(kwargs.get("work_hours", 4)))
-
-    def __repr__(self):
-        return f"Day(date={self.__date}, day_work_hours={self.__work_hours})"
-
-    def __str__(self):
-        return f"Day date: {self.__date}, day_work_hours={self.__work_hours}"
-
-    @property
-    def date(self):
-        return self.__date
-
-    @date.setter
-    def date(self, date):
-        self.__date = date
-
-    @property
-    def work_hours(self):
-        return self.__work_hours
-
-    @work_hours.setter
-    def work_hours(self, work_hours):
-        self.__work_hours = work_hours
+from Task import Task, TooDistantDateError
+from Day import Day
 
 
 def print_class_objs(input_list: [], *attrs):
@@ -119,7 +14,7 @@ def print_class_objs(input_list: [], *attrs):
         print()
 
 
-def read_class_objs(file_name: str, class_init, * pos_attr_names) -> []:
+def read_class_objs(file_name: str, class_init, *pos_attr_names: []) -> []:
     result = []
     with open(file_name, 'r') as input_file:
         lines = input_file.readlines()
@@ -137,7 +32,38 @@ def read_class_objs(file_name: str, class_init, * pos_attr_names) -> []:
                 elif "=" in attr_str:
                     key, val = attr_str.split("=")
                     kw_attrs[key.strip()] = val.strip()
-            result.append(class_init(*pos_attrs, **kw_attrs))
+            try:
+                result.append(class_init(*pos_attrs, **kw_attrs))
+            except TooDistantDateError as err:
+                print(err)
+    return result
+
+
+def get_hours_before_deadline(arg_date, arg_deadline, arg_calendar):
+    days_before_deadline = list(filter(lambda d: arg_date < d.date < arg_deadline, arg_calendar))
+    return sum(map(lambda d: d.work_hours, days_before_deadline), timedelta(hours=0))
+
+
+def get_hours_from_timedelta(td_obj: timedelta) -> int:
+    return td_obj.seconds // 3600
+
+
+def create_calendar(arg_tasks: [Task], arg_spec_days: [Day]) -> [Day]:
+    result = []
+    cur_date = date.today()
+    # while cur_date < max(filter(lambda d: not d.is_weekend(), spec_days),
+    #                      key=lambda d: d.date).date:
+    max_deadline_date = max(arg_tasks, key=lambda t: t.deadline).deadline
+    max_spec_days_date = max(filter(lambda d: not d.is_weekend(), arg_spec_days),
+                             key=lambda d: d.date).date
+    while cur_date < max(max_deadline_date, max_spec_days_date):
+        work_hours = 4
+        spec_dates = dict(zip(map(lambda d: d.date, arg_spec_days),
+                              map(lambda d: d.work_hours, arg_spec_days)))
+        if cur_date in spec_dates.keys():
+            work_hours = get_hours_from_timedelta(spec_dates[cur_date])
+        result.append(Day(cur_date, work_hours=work_hours))
+        cur_date += timedelta(days=1)
     return result
 
 
@@ -150,15 +76,31 @@ if __name__ == "__main__":
     task_pos_attr_names = ["name"]
     tasks = read_class_objs('tasks.txt', Task, task_pos_attr_names)
     day_pos_attr_names = ["date"]
-    days = read_class_objs('days.txt', Day, day_pos_attr_names)
+    spec_days = read_class_objs('days.txt', Day, day_pos_attr_names)
 
     # print class lists
+    print("Tasks:")
     task_attrs = ["name", "interest", "deadline"]
     print_class_objs(sorted(tasks, key=lambda tsk: tsk.interest, reverse=True),
                      *task_attrs)
+
+    print("\nSpecial days:")
     day_attrs = ["date", "work_hours"]
-    print_class_objs(sorted(days, key=lambda d: d.date), *day_attrs)
+    print_class_objs(sorted(spec_days, key=lambda d: d.date), *day_attrs)
+    print()
+
+    print("Calendar max_day:")
+    calendar = create_calendar(tasks, spec_days)
+    print(max(calendar, key=lambda d: d.date))
+    print()
+
+    print("Hours before deadline:")
+    task_name = "Java spring tutor project"
+    ex_deadline_date = next(filter(lambda t: t.name.lower() == task_name.lower(), tasks)).deadline
+    # print(ex_deadline_date)
+    ex_date_date = date.today()
+    print(get_hours_before_deadline(ex_date_date, ex_deadline_date, calendar))
 
     # better first
-    if allocation_type == "better_first":
-        tasks.sort(key=lambda tsk: (tsk.must_do, tsk.interest))
+    # if allocation_type == "better_first":
+    #     tasks.sort(key=lambda tsk: (tsk.must_do, tsk.interest))
