@@ -1,0 +1,6 @@
+Prepare for differential equations test, deadline=02.01.2024, interest=3, work_hours=4, must_do=True
+Prepare history report, deadline=02.01.2024, interest=2, work_hours=2, must_do=False
+Do physics homework, deadline=04.01.2024, interest=5, work_hours=2, must_do=True
+Study Python classes, deadline=01.02.2024, interest=8, work_hours=10, must_do=False
+Do philosophy homework, deadline=05.01.2024, interest=4, work_hours=1, must_do=True
+Prepare psychology report, deadline=05.01.2024, interest=3, work_hours=2, must_do=False
