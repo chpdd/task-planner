@@ -27,8 +27,16 @@ class Day:
         return Day(self.__date, wotk_hours=self.__work_hours, tasks=copy_tasks)
 
     @classmethod
+    def get_default_work_hours(cls):
+        return cls.__default_work_hours
+
+    @classmethod
     def set_default_work_hours(cls, default_work_hours):
         cls.__default_work_hours = default_work_hours
+
+    @classmethod
+    def get_actual_date(cls):
+        return cls.__actual_date
 
     @classmethod
     def set_actual_date(cls, actual_date):
@@ -147,6 +155,10 @@ class Task:
         return (f"Task(tasK_id={self.__task_id}, name={self.__name}, deadline={self.__deadline}, "
                 f"interest={self.__interest}, work_hours={self.__work_hours}, "
                 f"must_do={self.__must_do})")
+
+    @classmethod
+    def get_default_work_hours(cls):
+        return cls.__default_work_hours
 
     @classmethod
     def set_default_work_hours(cls, default_work_hours):

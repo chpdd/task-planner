@@ -8,7 +8,7 @@ if __name__ == "__main__":
     allocation_type = "better_first"
 
     default_task_work_hours = 2
-    default_day_work_hours = 4
+    default_day_work_hours = 6
     Task.set_default_work_hours(default_task_work_hours)
     Day.set_default_work_hours(default_day_work_hours)
 
@@ -37,9 +37,10 @@ if __name__ == "__main__":
     print("Calendar max_day:")
     calendar = create_calendar(tasks, spec_days)
     print(max(calendar, key=lambda d: d.date))
+    print(f"Days in calendar={len(calendar)}")
     print()
 
-    print("Hours before deadline:")
+    print("Work hours before deadline:")
     # task_name = "Java spring tutor project"
     # example_date = date.today()
     # example_deadline = next(filter(lambda t: t.name.lower() == task_name.lower(), tasks)).deadline
@@ -58,3 +59,11 @@ if __name__ == "__main__":
     allocated_calendar = allocate_tasks(sorted_tasks, calendar)
     # print(*filter(lambda day_: day_.has_tasks(), allocated_calendar), sep="\n")
     print_calendar_with_schedule(allocated_calendar, tasks)
+
+    print("Failed tasks:")
+    failed_task_ids = validate_allocation(allocated_calendar, tasks)
+    failed_tasks = []
+    for task_id_ in failed_task_ids:
+        failed_tasks.append(get_instance_by_attr(tasks, "task_id", task_id_))
+    print_instances(failed_tasks, *task_attrs)
+    print(f"Is it possible to complete all the must_do tasks: {not contains_must_do(failed_tasks)}")

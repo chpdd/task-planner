@@ -22,7 +22,7 @@ def create_calendar(tasks: [Task], spec_days: [Day]) -> [Day]:
         max_date = max_deadline_date
         cur_date = min_deadline_date
     while cur_date < max_date:
-        work_hours = 4
+        work_hours = Day.get_default_work_hours()
         spec_dates = dict(zip(map(lambda d: d.date, spec_days),
                               map(lambda d: d.work_hours, spec_days)))
         if cur_date in spec_dates.keys():
@@ -86,14 +86,27 @@ def allocate_tasks(tasks, calendar):
         return new_calendar
 
 
-def validate_allocation(tasks, calendar):
-    copy_tasks = deepcopy(tasks)
-    cur_date = min(tasks, key=lambda t: t.deadline).deadline
-
-    cur_task = copy_tasks[0]
+def validate_allocation(calendar, tasks):
+    failed_task_ids = set()
     for day_ in calendar:
-        pass
-    return True
+        task_schedule = day_.task_schedule
+        for task_id_, schedule_task_hours in task_schedule.items():
+            task_ = get_instance_by_attr(tasks, "task_id", task_id_)
+            if day_.date >= task_.deadline:
+                failed_task_ids.add(task_id_)
+    return failed_task_ids
+
+
+"""
+checking failed tasks for must_do
+"""
+
+
+def contains_must_do(failed_tasks):
+    for task_ in failed_tasks:
+        if task_.must_do:
+            return True
+    return False
 
 
 def print_calendar_with_schedule(calendar, tasks):

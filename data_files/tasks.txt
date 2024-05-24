@@ -11,5 +11,5 @@ Java spring collective project, deadline=1.06.2024, interest = 4, work_hours = 6
 Python multithreading, interest = 7, work_hours = 4, must_do = False
 Python async, interest = 7, work_hours = 4, must_do = False
 Python algrtms, interest = 9, work_hours = 10, must_do = False
-Task allocator, deadline=27.05.2024, interest = 5, work_hours = 10, must_do = True
-Telegram bot, interest = 10, work_hours = 20
+Task allocator, deadline=27.05.2024, interest = 9, work_hours = 5, must_do = True
+Telegram bot, interest = 9, work_hours = 20
