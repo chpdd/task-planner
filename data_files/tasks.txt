@@ -7,8 +7,8 @@ WEB 7, deadline=28.05.2024, interest = 6, work_hours = 6
 WEB 8/Django site, deadline=28.05.2024, interest = 7, work_hours = 4
 Dif urav KR1, deadline=27.05.2024, interest = 3, work_hours = 4
 Comp analyze KR3, deadline=27.05.2024, interest = 1, work_hours = 4
-Java spring tutor project, deadline=27.05.2024, interest = 5, work_hours = 6
-Java spring collective project, deadline=27.05.2024, interest = 4, work_hours = 6
+Java spring tutor project, deadline=1.06.2024, interest = 5, work_hours = 6
+Java spring collective project, deadline=1.06.2024, interest = 4, work_hours = 6
 Python multithreading, interest = 7, work_hours = 4, must_do = False
 Python async, interest = 7, work_hours = 4, must_do = False
 Python algrtms, interest = 9, work_hours = 10, must_do = False
