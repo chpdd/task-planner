@@ -2,6 +2,7 @@ from datetime import timedelta
 from copy import deepcopy
 
 from .classes import Task, Day
+from .utils import get_instance_by_attr, to_str_instance
 
 
 def create_calendar(tasks: [Task], spec_days: [Day]) -> [Day]:
@@ -49,25 +50,40 @@ def guaranteed_sort(tasks):
 def allocate_tasks(tasks, calendar):
     copy_tasks = deepcopy(tasks)
     new_calendar = deepcopy(calendar)
-    calendar_iterator = iter(new_calendar)
-    day_ = next(calendar_iterator)
-    day_work_hours = day_.work_hours
-    for task_ in tasks:
+
+    try:
+        tasks_iterator = iter(copy_tasks)
+        task_ = next(tasks_iterator)
+        task_work_hours = task_.work_hours
+
+        calendar_iterator = iter(new_calendar)
+        day_ = next(calendar_iterator)
         while day_.is_weekend():
             day_ = next(calendar_iterator)
-            day_work_hours = day_.work_hours
-        task_work_hours = task_.work_hours
+        day_work_hours = day_.work_hours
+
         task_schedule = day_.task_schedule
-        while task_work_hours != 0:
-            if task_work_hours <= day_work_hours:
+        while True:
+            if day_work_hours >= task_work_hours:
                 task_schedule[task_.task_id] = task_work_hours
                 day_work_hours -= task_work_hours
-                task_work_hours = 0
+                task_ = next(tasks_iterator)
+                # print("Next task")
+                task_work_hours = task_.work_hours
+                if day_work_hours == 0:
+                    day_ = next(calendar_iterator)
+                    # print("Next day")
+                    day_work_hours = day_.work_hours
+                    task_schedule = day_.task_schedule
             else:
-                task_schedule[task_.task_id] = task_work_hours
+                task_schedule[task_.task_id] = day_work_hours
                 task_work_hours -= day_work_hours
-                day_work_hours = 0
-    return new_calendar
+                day_ = next(calendar_iterator)
+                # print("Next day")
+                day_work_hours = day_.work_hours
+                task_schedule = day_.task_schedule
+    except StopIteration:
+        return new_calendar
 
 
 def validate_allocation(tasks, calendar):
@@ -78,3 +94,14 @@ def validate_allocation(tasks, calendar):
     for day_ in calendar:
         pass
     return True
+
+
+def print_calendar_with_schedule(calendar, tasks):
+    for day_ in calendar:
+        if day_.has_tasks():
+            print(f"Day {day_.date} with work_hours={day_.work_hours} have tasks:")
+            for task_id, schedule_task_hours in day_.task_schedule.items():
+                task_ = get_instance_by_attr(tasks, "task_id", task_id)
+                output_attrs = ["name", "deadline", "interest", "must_do"]
+                print(f"{schedule_task_hours} work hours at {to_str_instance(task_, *output_attrs)}")
+            print()

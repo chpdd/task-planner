@@ -23,17 +23,16 @@ def read_class_instances(file_name: str, class_init, *pos_attr_names: []) -> []:
     return result
 
 
-def print_class_instances(input_list: [], *attrs):
-    for elem in input_list:
+def print_instances(input_list: [], *attrs):
+    for instance_ in input_list:
         # print(attrs)
-        for attr in attrs:
-            # print(attr)
-            result = getattr(elem, attr, "No attr")
-            if isinstance(result, datetime):
-                result = result.date()
-            print(f"{attr}={result}", end=", ")
-        print()
+        print(to_str_instance(instance_, *attrs))
 
+
+def to_str_instance(instance_, *attrs):
+    # for attr in attrs:
+    #     result = getattr(instance_, attr, "No attr")
+    return ", ".join([f"{attr}={getattr(instance_, attr, "None")}" for attr in attrs])
 
 def get_hours_from_timedelta(td_obj: timedelta) -> int:
     return td_obj.seconds // 3600

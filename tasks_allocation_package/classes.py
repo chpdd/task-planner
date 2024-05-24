@@ -5,6 +5,7 @@ from .exceptions import *
 
 class Day:
     __default_work_hours = 4
+    __actual_date = datetime.today()
 
     def __init__(self, date_, **kwargs):
         if isinstance(date_, str):
@@ -16,10 +17,10 @@ class Day:
         self.__task_schedule = kwargs.get("task_schedule", {})
 
     def __repr__(self):
-        return f"Day(date={self.__date}, day_work_hours={self.__work_hours})"
+        return f"Day(date={self.__date}, day_work_hours={self.__work_hours}, task_schedule={self.__task_schedule})"
 
     def __str__(self):
-        return f"Day date: {self.__date}, day_work_hours={self.__work_hours}"
+        return f"Day date: {self.__date}, day_work_hours={self.__work_hours}, task_schedule: {self.__task_schedule}"
 
     def __copy__(self):
         copy_tasks = deepcopy(self.__task_schedule)
@@ -29,8 +30,12 @@ class Day:
     def set_default_work_hours(cls, default_work_hours):
         cls.__default_work_hours = default_work_hours
 
+    @classmethod
+    def set_actual_date(cls, actual_date):
+        cls.__actual_date = actual_date
+
     def is_weekend(self):
-        if self.__work_hours == timedelta(hours=0):
+        if self.__work_hours == 0:
             return True
         return False
 
@@ -75,6 +80,7 @@ class Day:
 class Task:
     """Work_hours in day for class"""
     __default_work_hours = 4
+    __actual_date = date.today()
     """ID counter"""
     __id_counter = 0
 
@@ -86,12 +92,11 @@ class Task:
 
         """Validate deadline"""
         if ("deadline" in kwargs and
-                datetime.strptime(kwargs["deadline"], "%d.%m.%Y").date() > date.today() + timedelta(days=365)):
+                datetime.strptime(kwargs["deadline"], "%d.%m.%Y").date() > Task.__actual_date + timedelta(days=365)):
             raise TooDistantDateError("The planned date is too far away.")
 
         """Initialize id"""
-        self.__task_id = self.__id_counter
-        self.__id_counter += 1
+        self.__task_id = Task.__generate_id()
 
         """Initialize name"""
         self.__name = name
@@ -104,7 +109,7 @@ class Task:
         if "deadline" in kwargs:
             self.__deadline = datetime.strptime(kwargs["deadline"], "%d.%m.%Y").date()
         else:
-            self.__deadline = date.today() + timedelta(days=90)
+            self.__deadline = Task.__actual_date + timedelta(days=90)
 
         """
         Initialize interest 
@@ -134,18 +139,27 @@ class Task:
         self.__must_do = False if kwargs.get("must_do", None) == "False" else True
 
     def __str__(self):
-        return (f"Task name: {self.__name}, deadline: {self.__deadline}, "
+        return (f"Task with id: {self.__task_id}, name: {self.__name}, deadline: {self.__deadline}, "
                 f"interest: {self.__interest}/10, work_hours: {self.__work_hours}, "
                 f"must_do: {self.__must_do} ")
 
     def __repr__(self):
-        return (f"Task(name={self.__name}, deadline={self.__deadline}, "
+        return (f"Task(tasK_id={self.__task_id}, name={self.__name}, deadline={self.__deadline}, "
                 f"interest={self.__interest}, work_hours={self.__work_hours}, "
                 f"must_do={self.__must_do})")
 
     @classmethod
     def set_default_work_hours(cls, default_work_hours):
         cls.__default_work_hours = default_work_hours
+
+    @classmethod
+    def set_actual_date(cls, actual_date):
+        cls.__actual_date = actual_date
+
+    @classmethod
+    def __generate_id(cls):
+        cls.__id_counter += 1
+        return cls.__id_counter
 
     @property
     def interest(self):
