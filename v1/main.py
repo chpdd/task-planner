@@ -131,13 +131,27 @@ def get_obj_by_attr(obj_list, attr_name, attr_value):
             return obj
     return None
 
+def print_calendar_with_schedule(calendar, tasks):
+    for day_ in calendar:
+        if day_.has_tasks():
+            print(f"Day {day_.date} with work_hours={day_.work_hours} have tasks:")
+            for task_id, schedule_task_hours in day_.task_schedule.items():
+                task_ = get_obj_by_attr(tasks, "task_id", task_id)
+                output_attrs = ["name", "deadline", "interest", "must_do"]
+                print(f"{schedule_task_hours} work hours at {to_str_obj(task_, *output_attrs)}")
+            print()
+
+def to_str_obj(instance_, *attrs):
+    # for attr in attrs:
+    #     result = getattr(instance_, attr, "No attr")
+    return ", ".join([f"{attr}={getattr(instance_, attr, "None")}" for attr in attrs])
 
 if __name__ == "__main__":
     # types: better_first, better_last, mixed
     allocation_type = "better_first"
     weekends = []
-    tasks_file_name = "../tasks2.txt"
-    days_file_name = "../days2.txt"
+    tasks_file_name = "../data_files/tasks2.txt"
+    days_file_name = "../data_files/days2.txt"
     default_task_work_hours = 2
     default_day_work_hours = 4
     Task.set_default_work_hours(default_task_work_hours)
@@ -183,3 +197,4 @@ if __name__ == "__main__":
     print("Calendar with guaranteed sort tasks:")
     allocated_calendar = allocate_tasks(sorted_tasks, calendar)
     print(allocated_calendar)
+
