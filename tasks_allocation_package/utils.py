@@ -43,8 +43,3 @@ def get_instance_by_attr(instance_list, attr_name, attr_value):
         if getattr(instance_, attr_name) == attr_value:
             return instance_
     return None
-
-
-def get_hours_before_deadline(date_, deadline, calendar):
-    days_before_deadline = list(filter(lambda d: date_ < d.date < deadline, calendar))
-    return sum(map(lambda d: d.work_hours, days_before_deadline))

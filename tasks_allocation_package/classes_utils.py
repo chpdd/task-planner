@@ -1,5 +1,5 @@
 from datetime import timedelta
-from copy import deepcopy
+from copy import deepcopy, copy
 
 from .classes import Task, Day
 from .utils import get_instance_by_attr, to_str_instance
@@ -32,7 +32,12 @@ def create_calendar(tasks: [Task], spec_days: [Day]) -> [Day]:
     return result
 
 
-def guaranteed_sort(tasks):
+def get_hours_before_deadline(date_, deadline, calendar):
+    days_before_deadline = list(filter(lambda d: date_ < d.date < deadline, calendar))
+    return sum(map(lambda d: d.work_hours, days_before_deadline))
+
+
+def deadline_mustdo_sort(tasks):
     copy_tasks = deepcopy(tasks)
     new_tasks = []
     deadlines_set = sorted(set(map(lambda task_: task_.deadline, copy_tasks)))
@@ -45,6 +50,100 @@ def guaranteed_sort(tasks):
     return new_tasks
     # task_attrs = ["name", "deadline", "interest", "must_do"]
     # print_class_objs(new_tasks, *task_attrs)
+
+
+def smart_sort(tasks, calendar):
+    def calc_mustdo_coef(must_do: bool):
+        return 1.5 if must_do else 1
+
+    def chck_upcoming_ddlns(hrs_ddln_dct: dict):
+        if len(hrs_ddln_dct) == 0:
+            return False, None
+        first_iteration_flag = True
+        first_id = 1
+        for local_task_id_, hrs_ddln in hrs_ddln_dct.items():
+            local_task = get_instance_by_attr(tasks, "task_id", local_task_id_)
+            if first_iteration_flag:
+                first_id = local_task_id_
+                first_iteration_flag = False
+            if local_task.work_hours == hrs_ddln:
+                return True, local_task.task_id
+        nxt_hrs_ddln_dct = copy(hrs_ddln_dct)
+        del nxt_hrs_ddln_dct[first_id]
+        return chck_upcoming_ddlns(dict(map(lambda pair: (pair[0], pair[1] - hrs_ddln_dct[0]), nxt_hrs_ddln_dct)))
+
+    copy_tasks = deepcopy(tasks)
+    actual_date = Day.get_actual_date()
+    work_hours_list = []
+    hours_to_last_deadline = get_hours_before_deadline(
+        actual_date, max(tasks, key=lambda task_: task_.deadline), calendar)
+
+    srt_hours_to_deadline_dict = sorted(copy_tasks, key=lambda task_: (
+        get_hours_before_deadline(actual_date, task_.deadline, calendar),
+        1 - task_.must_do,
+        1 / task_.sum_interest))
+    # srt_hours_to_deadline_dict = map(lambda task_: task_.task_id, srt_hours_to_deadline_dict)
+    # srt_hours_to_deadline_dict = dict(zip(
+    #     srt_hours_to_deadline_dict,
+    #     map(lambda task_id_:
+    #         get_hours_before_deadline(actual_date, get_instance_by_attr(tasks, "task_id", task_id_).deadline, calendar),
+    #         srt_hours_to_deadline_dict)
+    # ))
+    srt_hours_to_deadline_dict = dict(map(lambda task_:
+                                          (
+                                              task_.task_id,
+                                              get_hours_before_deadline(actual_date, task_.deadline, calendar)
+                                          ),
+                                          srt_hours_to_deadline_dict))
+
+    # srt_sum_interest_dict = sorted(copy_tasks, key=lambda task_: (
+    #     task_.sum_interest, task_.must_do, 1 / get_hours_before_deadline(actual_date, task_.deadline, calendar)),
+    #                                reverse=True)
+    # srt_sum_interest_dict = map(lambda task_: task_.task_id, srt_sum_interest_dict)
+    # srt_sum_interest_dict = dict(zip(srt_sum_interest_dict, map(lambda task_: [task_.sum_interest, task_.work_hours], tasks)))
+
+    srt_interest_dict = sorted(copy_tasks, key=lambda task_: (
+        task_.interest,
+        calc_mustdo_coef(task_.must_do) * 1
+        / get_hours_before_deadline(actual_date, task_.deadline, calendar)
+    ), reverse=True)
+    srt_interest_dict = dict(map(lambda task_:
+                                 (
+                                     task_.task_id,
+                                     get_hours_before_deadline(actual_date, task_.deadline, calendar)
+                                 ),
+                                 srt_interest_dict))
+    # srt_interest_dict = map(lambda task_: task_.task_id, srt_interest_dict)
+    # srt_interest_dict = dict(zip(
+    #     srt_interest_dict,
+    #     map(lambda task_: [task_.interest, task_.work_hours], srt_interest_dict)
+    # ))
+
+    while len(srt_hours_to_deadline_dict) > 0 and len(srt_interest_dict) > 0:
+        upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_hours_to_deadline_dict)
+        while upcoming_ddln_flag:
+            task_ = get_instance_by_attr(tasks, "task_id", task_id_)
+            for wrk_hr in range(task_.work_hours):
+                work_hours_list.append(task_id_)
+            del srt_hours_to_deadline_dict[task_id_]
+            del srt_interest_dict[task_id_]
+            upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_hours_to_deadline_dict)
+
+        interest_iterator = iter(srt_interest_dict)
+        task_id_ = next(interest_iterator)
+        work_hours_list.append(task_id_)
+        srt_interest_dict[task_id_] -= 1
+        srt_hours_to_deadline_dict[task_id_] -= 1
+        if srt_interest_dict[task_id_] == 0:
+            del srt_hours_to_deadline_dict[task_id_]
+            del srt_interest_dict[task_id_]
+
+    return work_hours_list
+
+def allocate_work_hours(work_hours_list, calendar):
+    new_calendar = deepcopy(calendar)
+    for work_hour in work_hours_list:
+        pass
 
 
 def allocate_tasks(tasks, calendar):

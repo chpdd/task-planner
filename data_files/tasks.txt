@@ -13,3 +13,7 @@ Python async, interest = 7, work_hours = 4, must_do = False
 Python algrtms, interest = 9, work_hours = 10, must_do = False
 Task allocator, deadline=27.05.2024, interest = 9, work_hours = 5, must_do = True
 Telegram bot, interest = 9, work_hours = 20
+Personal Proxy/VPN, interest = 7, work_hours = 10, must_do = False
+Smart Contacts, interest = 7, work_hours = 20, must_do = False
+Blockchain, interest = 7, work_hours = 20, must_do = False
+Crypto bot, interest = 8, work_hours = 40, must_do = False

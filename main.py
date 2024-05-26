@@ -50,7 +50,7 @@ if __name__ == "__main__":
     print()
 
     print("Guaranteed sort tasks:")
-    sorted_tasks = guaranteed_sort(tasks)
+    sorted_tasks = deadline_mustdo_sort(tasks)
     task_attrs = ["name", "deadline", "interest", "must_do"]
     print_instances(sorted_tasks, *task_attrs)
     print()

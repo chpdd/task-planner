@@ -216,3 +216,7 @@ class Task:
     @work_hours.setter
     def work_hours(self, work_hours):
         self.__work_hours = work_hours
+
+    @property
+    def sum_interest(self):
+        return self.__work_hours * self.__interest
