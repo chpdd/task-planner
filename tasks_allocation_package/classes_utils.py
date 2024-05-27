@@ -2,13 +2,12 @@ from datetime import timedelta
 from copy import deepcopy, copy
 
 from .classes import Task, Day
-from .utils import get_instance_by_attr, to_str_instance
+from .utils import get_instance_by_attr, to_str_instance, date_to_normal_str
 
 
 def create_calendar(tasks: [Task], spec_days: [Day]) -> [Day]:
     result = []
     cur_date = Day.get_actual_date()
-    print(cur_date)
     max_deadline_date = max(tasks, key=lambda t: t.deadline).deadline
     if len(spec_days) != 0:
         max_spec_days_date = max(filter(lambda d: not d.is_weekend(), spec_days),
@@ -86,6 +85,96 @@ def allocate_tasks(tasks, calendar):
                 task_schedule = day_.task_schedule
     except StopIteration:
         return new_calendar
+
+
+def smart_sort_v1(tasks, calendar) -> {int: int}:
+    def calc_mustdo_coef(must_do: bool):
+        return 1.5 if must_do else 1
+
+    def create_id_hours_dict(local_tasks):
+        return dict(map(lambda task_:
+                        (
+                            task_.task_id,
+                            get_hours_before_deadline(actual_date, task_.deadline, calendar),
+                        ),
+                        local_tasks))
+
+    def substract_hours(id_hours_dict: {}, hrs: int):
+        return dict(map(lambda pair: (pair[0], pair[1] - hrs),
+                        id_hours_dict.items()))
+
+    def chck_upcoming_ddlns(hrs_ddln_dct: {int: int}):
+        if len(hrs_ddln_dct) == 0:
+            return False, None
+        first_iteration_flag = True
+        first_id = 1
+        for local_task_id_, hrs_ddln in hrs_ddln_dct.items():
+            local_task = get_instance_by_attr(copy_tasks, "task_id", local_task_id_)
+            if first_iteration_flag:
+                first_id = local_task_id_
+                first_iteration_flag = False
+            if local_task.work_hours >= hrs_ddln:
+                return True, local_task_id_
+        nxt_hrs_ddln_dct = copy(hrs_ddln_dct)
+        del nxt_hrs_ddln_dct[first_id]
+        nxt_hrs_ddln_dct = substract_hours(nxt_hrs_ddln_dct, hrs_ddln_dct[first_id])
+        return chck_upcoming_ddlns(nxt_hrs_ddln_dct)
+
+    copy_tasks = deepcopy(tasks)
+    actual_date = Day.get_actual_date()
+    work_hours_list = []
+    hours_to_last_deadline = get_hours_before_deadline(
+        actual_date, max(copy_tasks, key=lambda task_: task_.deadline).deadline, calendar)
+
+    srt_hours_to_deadline_dict = sorted(copy_tasks, key=lambda task_: (
+        get_hours_before_deadline(actual_date, task_.deadline, calendar),
+        1 - task_.must_do,
+        1 / task_.sum_interest))
+    srt_hours_to_deadline_dict = create_id_hours_dict(srt_hours_to_deadline_dict)
+
+    srt_interest_dict = sorted(copy_tasks, key=lambda task_: (
+        task_.interest,
+        calc_mustdo_coef(task_.must_do) * 1
+        / (get_hours_before_deadline(actual_date, task_.deadline, calendar) + 1)
+    ), reverse=True)
+    srt_interest_dict = create_id_hours_dict(srt_interest_dict)
+
+    failed_tasks = []
+
+    while len(srt_hours_to_deadline_dict) > 0 and len(srt_interest_dict) > 0:
+        upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_hours_to_deadline_dict)
+        while upcoming_ddln_flag:
+            task_ = get_instance_by_attr(copy_tasks, "task_id", task_id_)
+            if srt_hours_to_deadline_dict[task_id_] < task_.work_hours:
+                failed_tasks.append(task_id_)
+                del srt_hours_to_deadline_dict[task_id_]
+                del srt_interest_dict[task_id_]
+                upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_hours_to_deadline_dict)
+                continue
+            for wrk_hr in range(task_.work_hours):
+                work_hours_list.append(task_id_)
+            srt_hours_to_deadline_dict = substract_hours(srt_hours_to_deadline_dict, task_.work_hours)
+            srt_interest_dict = substract_hours(srt_interest_dict, task_.work_hours)
+            task_.work_hours = 0
+            del srt_hours_to_deadline_dict[task_id_]
+            del srt_interest_dict[task_id_]
+            upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_hours_to_deadline_dict)
+
+        try:
+            interest_iterator = iter(srt_interest_dict)
+            task_id_ = next(interest_iterator)
+            task_ = get_instance_by_attr(copy_tasks, "task_id", task_id_)
+            work_hours_list.append(task_id_)
+            srt_hours_to_deadline_dict = substract_hours(srt_hours_to_deadline_dict, 1)
+            srt_interest_dict = substract_hours(srt_interest_dict, 1)
+            task_.work_hours -= 1
+            if task_.work_hours == 0:
+                del srt_hours_to_deadline_dict[task_id_]
+                del srt_interest_dict[task_id_]
+        except StopIteration:
+            break
+
+    return work_hours_list
 
 
 def smart_sort(tasks, calendar) -> {int: int}:
@@ -237,3 +326,20 @@ def print_calendar_with_schedule(calendar, tasks):
                 output_attrs = ["name", "deadline", "interest", "must_do"]
                 print(f"{schedule_task_hours} work hours at {to_str_instance(task_, *output_attrs)}")
             print()
+
+
+def print_calendar_with_schedule_rus(calendar, tasks):
+    print("Календарь с распределёнными задачами:")
+    for day_ in calendar:
+        if day_.has_tasks():
+            print(f"{((date_to_normal_str(day_.date)))}:")
+            for task_id, schedule_task_hours in day_.task_schedule.items():
+                task_ = get_instance_by_attr(tasks, "task_id", task_id)
+                # output_attrs = ["name", "deadline", "interest", "must_do"]
+                # print(f"{schedule_task_hours} work hours at {to_str_instance(task_, *output_attrs)}")
+                print(f'Делать задачу "{task_.name}" на протяжении {schedule_task_hours} часов/а')
+            print()
+
+def print_present_tasks_rus(tasks: [Task]):
+    for task_ in tasks:
+        task_.present_print_rus()

@@ -1,6 +1,8 @@
 from datetime import timedelta, date, datetime
 from copy import deepcopy
+
 from .exceptions import *
+from .utils import date_to_normal_str
 
 
 class Day:
@@ -128,8 +130,6 @@ class Task:
 
         """
         Initialize work hours
-
-        by default = 4 hours
         """
         # if "work_hours" in kwargs:
         #     self.__work_hours = timedelta(hours=int(kwargs["work_hours"]))
@@ -155,6 +155,11 @@ class Task:
         return (f"Task(tasK_id={self.__task_id}, name={self.__name}, deadline={self.__deadline}, "
                 f"interest={self.__interest}, work_hours={self.__work_hours}, "
                 f"must_do={self.__must_do})")
+
+    def present_print_rus(self):
+        print(f"{self.__task_id}. {self.__name}, "
+                f"дедлайн: {date_to_normal_str(self.__deadline)}, интерес: {self.__interest}/10,"
+                f" время выполнения в часах: {self.__work_hours}, обязательно: {'Да' if self.__must_do else 'Нет'}")
 
     @classmethod
     def get_default_work_hours(cls):
