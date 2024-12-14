@@ -1,5 +1,5 @@
-from tasks_allocation_package.classes_utils import *
-from tasks_allocation_package.utils import *
+from .tasks_allocation_package.classes_utils import *
+from .tasks_allocation_package.utils import *
 
 if __name__ == "__main__":
     tasks_file_name = "tasks.txt"

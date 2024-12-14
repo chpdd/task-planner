@@ -1,13 +1,22 @@
+import datetime
 from datetime import timedelta
 from copy import deepcopy, copy
+from scipy.optimize import linprog
+import numpy as np
 
 from .classes import Task, Day
 from .utils import get_instance_by_attr, to_str_instance, date_to_normal_str
 
 
 def create_calendar(tasks: [Task], spec_days: [Day]) -> [Day]:
+    """
+    Create calendar. A calendar is simply a list of absolutely all days
+     from the beginning of the actual date to the maximum day.
+
+    On the output Days will not have a filled task_schedule, to fill it we use allocate_tasks
+    """
     result = []
-    cur_date = Day.get_actual_date()
+    act_date = Day.get_actual_date()
     max_deadline_date = max(tasks, key=lambda t: t.deadline).deadline
     if len(spec_days) != 0:
         max_spec_days_date = max(filter(lambda d: not d.is_weekend(), spec_days),
@@ -15,25 +24,40 @@ def create_calendar(tasks: [Task], spec_days: [Day]) -> [Day]:
         max_date = max(max_deadline_date, max_spec_days_date)
     else:
         max_date = max_deadline_date
-    # cur_date = Day.get_actual_date()
-    while cur_date < max_date:
+    while act_date < max_date:
         work_hours = Day.get_default_work_hours()
         spec_dates = dict(zip(map(lambda d: d.date, spec_days),
                               map(lambda d: d.work_hours, spec_days)))
-        if cur_date in spec_dates.keys():
-            work_hours = spec_dates[cur_date]
-        result.append(Day(cur_date, work_hours=work_hours))
-        cur_date += timedelta(days=1)
+        if act_date in spec_dates.keys():
+            work_hours = spec_dates[act_date]
+        result.append(Day(act_date, work_hours=work_hours))
+        act_date += timedelta(days=1)
     return result
 
 
 def get_hours_before_deadline(date_, deadline, calendar):
+    """
+    A function that counts the number of hours before a deadline
+
+    :param date_: Date from which the number of working hours before the deadline is counted
+    :param deadline: Task deadline
+    :param calendar:
+    :return: Number of hours to deadline
+    """
+
     # print(type(date_), type(calendar[0].date), type(deadline))
     days_before_deadline = list(filter(lambda d: date_ <= d.date < deadline, calendar))
     return sum(map(lambda d: d.work_hours, days_before_deadline))
 
 
 def deadline_mustdo_sort(tasks):
+    """
+    Sorting in which all must do tasks have the first priority
+
+    :param tasks: Unsorted list of Tasks
+    :return: Sorted list of Tasks
+    """
+
     copy_tasks = deepcopy(tasks)
     new_tasks = []
     deadlines_set = sorted(set(map(lambda task_: task_.deadline, copy_tasks)))
@@ -49,6 +73,14 @@ def deadline_mustdo_sort(tasks):
 
 
 def allocate_tasks(tasks, calendar):
+    """
+    Function that allocate Tasks by Days in the calendar
+
+    :param tasks:
+    :param calendar:
+    :return: Calendar in which the Days will be filled in with the tasks to be performed on that day
+    """
+
     copy_tasks = deepcopy(tasks)
     new_calendar = deepcopy(calendar)
 
@@ -177,11 +209,19 @@ def smart_sort_v1(tasks, calendar) -> {int: int}:
     return work_hours_list
 
 
-def smart_sort(tasks, calendar) -> {int: int}:
+def smart_sort_v2(tasks, calendar) -> {int: int}:
     def calc_mustdo_coef(must_do: bool):
+        """
+        :param must_do: Accepts True or False.
+        :return: Coefficient for determining weight
+        """
         return 1.5 if must_do else 1
 
     def create_id_hours_dict(local_tasks):
+        """
+        :param local_tasks:
+        :return: A Dict in which the key is task.id, and the value is the task.hours_before_deadline
+        """
         return dict(map(lambda task_:
                         (
                             task_.task_id,
@@ -190,14 +230,27 @@ def smart_sort(tasks, calendar) -> {int: int}:
                         local_tasks))
 
     def substract_hours(id_hours_dict: {}, hrs: int):
+        """
+        A function that subtracts hours from the dict in which the
+         task.id and task.hours_before_the_deadline are stored
+        :param id_hours_dict: A Dict in which the key is task.id, and the value is the task.working_hours
+        :param hrs: Hours to be subtracted
+        :return: id_hours_dict, but with hours subtracted
+        """
         return dict(map(lambda pair: (pair[0], pair[1] - hrs),
                         id_hours_dict.items()))
 
     def chck_upcoming_ddlns(hrs_ddln_dct: {int: int}):
+        """
+        A recursive function that checks if a deadline for some task is approaching
+        :param hrs_ddln_dct:
+        :return:
+        """
+
+        print(f"hrs_ddln_dct={hrs_ddln_dct}")
         if len(hrs_ddln_dct) == 0:
-            print("No upcmng ddln")
+            print("No upcoming deadline")
             return False, None
-        print(hrs_ddln_dct)
         first_iteration_flag = True
         first_id = 1
         for local_task_id_, hrs_ddln in hrs_ddln_dct.items():
@@ -206,8 +259,9 @@ def smart_sort(tasks, calendar) -> {int: int}:
                 first_id = local_task_id_
                 first_iteration_flag = False
             if local_task.work_hours >= hrs_ddln:
-                print(f"Upcmng ddln to {local_task_id_}")
+                print(f"Upcoming deadline to {local_task_id_}")
                 return True, local_task_id_
+        print("first_id:", first_id)
         nxt_hrs_ddln_dct = copy(hrs_ddln_dct)
         del nxt_hrs_ddln_dct[first_id]
         nxt_hrs_ddln_dct = substract_hours(nxt_hrs_ddln_dct, hrs_ddln_dct[first_id])
@@ -219,63 +273,81 @@ def smart_sort(tasks, calendar) -> {int: int}:
     hours_to_last_deadline = get_hours_before_deadline(
         actual_date, max(copy_tasks, key=lambda task_: task_.deadline).deadline, calendar)
 
-    srt_hours_to_deadline_dict = sorted(copy_tasks, key=lambda task_: (
+    srt_by_hrs_ddln_mustdo_tasks = sorted(filter(lambda task: task.must_do, copy_tasks), key=lambda task_: (
         get_hours_before_deadline(actual_date, task_.deadline, calendar),
         1 - task_.must_do,
         1 / task_.sum_interest))
-    srt_hours_to_deadline_dict = create_id_hours_dict(srt_hours_to_deadline_dict)
+    srt_task_id_hrs_ddln_mustdo_dict = create_id_hours_dict(srt_by_hrs_ddln_mustdo_tasks)
 
-    srt_interest_dict = sorted(copy_tasks, key=lambda task_: (
+    srt_by_interest_tasks = sorted(copy_tasks, key=lambda task_: (
         task_.interest,
         calc_mustdo_coef(task_.must_do) * 1
         / (get_hours_before_deadline(actual_date, task_.deadline, calendar) + 1)
     ), reverse=True)
-    srt_interest_dict = create_id_hours_dict(srt_interest_dict)
+    srt_task_id_intrst_dict = create_id_hours_dict(srt_by_interest_tasks)
 
     failed_tasks = []
 
-    while len(srt_hours_to_deadline_dict) > 0 and len(srt_interest_dict) > 0:
-        print("Start rec")
-        upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_hours_to_deadline_dict)
+    while len(srt_task_id_hrs_ddln_mustdo_dict) > 0 and len(srt_task_id_intrst_dict) > 0:
+        print(f"srt_task_id_hrs_ddln_mustdo_dict={srt_task_id_hrs_ddln_mustdo_dict}")
+        print(f"srt_task_id_intrst_dict={srt_task_id_intrst_dict}")
+        print(f"len(srt_task_id_hrs_ddln_mustdo_dict)={len(srt_task_id_hrs_ddln_mustdo_dict)}")
+        print(f"len(srt_task_id_intrst_dict)={len(srt_task_id_intrst_dict)}")
+        upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_task_id_hrs_ddln_mustdo_dict)
         while upcoming_ddln_flag:
+            '''
+            Block for must_do tasks
+            '''
             task_ = get_instance_by_attr(copy_tasks, "task_id", task_id_)
-            if srt_hours_to_deadline_dict[task_id_] < task_.work_hours:
+            if srt_task_id_hrs_ddln_mustdo_dict[task_id_] < task_.work_hours:
                 print(f"Failed in deadline {task_id_}")
                 failed_tasks.append(task_id_)
-                del srt_hours_to_deadline_dict[task_id_]
-                del srt_interest_dict[task_id_]
-                print("Start rec")
-                upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_hours_to_deadline_dict)
+                del srt_task_id_hrs_ddln_mustdo_dict[task_id_]
+                del srt_task_id_intrst_dict[task_id_]
+                upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_task_id_hrs_ddln_mustdo_dict)
                 continue
-            for wrk_hr in range(task_.work_hours):
-                work_hours_list.append(task_id_)
-            print(f"Completed in deadline {task_id_}")
-            srt_hours_to_deadline_dict = substract_hours(srt_hours_to_deadline_dict, task_.work_hours)
-            srt_interest_dict = substract_hours(srt_interest_dict, task_.work_hours)
-            task_.work_hours = 0
-            del srt_hours_to_deadline_dict[task_id_]
-            del srt_interest_dict[task_id_]
-            print("Start rec")
-            upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_hours_to_deadline_dict)
-            print()
 
+            '''
+            Block if the task can be completed
+            '''
+            work_hours_list.extend([task_id_] * task_.work_hours)
+            print(f"Completed in block 'upcoming deadline' {task_id_}")
+            srt_task_id_hrs_ddln_mustdo_dict = substract_hours(srt_task_id_hrs_ddln_mustdo_dict, task_.work_hours)
+            srt_task_id_intrst_dict = substract_hours(srt_task_id_intrst_dict, task_.work_hours)
+            task_.work_hours = 0
+            del srt_task_id_hrs_ddln_mustdo_dict[task_id_]
+            del srt_task_id_intrst_dict[task_id_]
+
+            upcoming_ddln_flag, task_id_ = chck_upcoming_ddlns(srt_task_id_hrs_ddln_mustdo_dict)
+
+        """
+        Block if deadlines are not approaching
+        """
         try:
-            interest_iterator = iter(srt_interest_dict)
+            interest_iterator = iter(srt_task_id_intrst_dict)
             task_id_ = next(interest_iterator)
             task_ = get_instance_by_attr(copy_tasks, "task_id", task_id_)
             work_hours_list.append(task_id_)
-            srt_hours_to_deadline_dict = substract_hours(srt_hours_to_deadline_dict, 1)
-            srt_interest_dict = substract_hours(srt_interest_dict, 1)
+            srt_task_id_hrs_ddln_mustdo_dict = substract_hours(srt_task_id_hrs_ddln_mustdo_dict, 1)
+            srt_task_id_intrst_dict = substract_hours(srt_task_id_intrst_dict, 1)
             task_.work_hours -= 1
+            print(f"-1 hour in interest for task with id {task_id_}")
+            print(f"srt_task_id_hrs_ddln_mustdo_dict={srt_task_id_hrs_ddln_mustdo_dict}")
+            print(f"srt_task_id_intrst_dict={srt_task_id_intrst_dict}")
+            print(f"work_hours_list={work_hours_list}")
             if task_.work_hours == 0:
-                print(f"Completed in interest: {task_id_}")
-                del srt_hours_to_deadline_dict[task_id_]
-                del srt_interest_dict[task_id_]
-                print()
+                print(f"Completed in block 'interest': {task_id_}")
+                print(srt_task_id_hrs_ddln_mustdo_dict)
+                print(srt_task_id_intrst_dict)
+                if task_.must_do:
+                    del srt_task_id_hrs_ddln_mustdo_dict[task_id_]
+                del srt_task_id_intrst_dict[task_id_]
         except StopIteration:
             break
+        print()
 
     return work_hours_list
+
 
 
 def allocate_work_hours(work_hours_list, calendar):
@@ -339,6 +411,7 @@ def print_calendar_with_schedule_rus(calendar, tasks):
                 # print(f"{schedule_task_hours} work hours at {to_str_instance(task_, *output_attrs)}")
                 print(f'Делать задачу "{task_.name}" на протяжении {schedule_task_hours} часов/а')
             print()
+
 
 def print_present_tasks_rus(tasks: [Task]):
     for task_ in tasks:
