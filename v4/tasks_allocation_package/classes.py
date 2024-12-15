@@ -1,7 +1,6 @@
 import datetime as dt
 from copy import deepcopy, copy
 
-from .exceptions import *
 from .utils import date_to_normal_str, read_class_instances, to_str_instance, get_instance_by_attr
 
 
@@ -266,10 +265,6 @@ class Planner:
     def failed_tasks(self, tasks: [Task]):
         self._failed_tasks = tasks
 
-    def next_filling_day(self):
-        self.add_day()
-        self.filling_day_index += 1
-
     def increment_act_date(self):
         self._actual_date += dt.timedelta(days=1)
 
@@ -279,6 +274,10 @@ class Planner:
         self.calendar.append(Day(date=date, work_hours=work_hours))
         self.increment_act_date()
 
+    def next_filling_day(self):
+        self.add_day()
+        self.filling_day_index += 1
+
     def add_task(self, task, work_hours):
         while work_hours:
             day = self.filling_day
@@ -286,21 +285,63 @@ class Planner:
             if day.is_task_filled():
                 self.next_filling_day()
 
-    def simple_sort(self):
+    def get_act_wk_hrs_bfr_ddln(self, deadline):
+        act_date = self.filling_day.date
+        if act_date < deadline:
+            hours_before_deadline = 0
+            hours_before_deadline = self.filling_day.day_schedule.work_hours - self.filling_day.day_schedule.sum_hours
+            act_date += dt.timedelta(days=1)
+            while act_date < deadline:
+                hours_before_deadline += self.manual_date_work_hours.get(act_date, self.dflt_day_wrk_hrs)
+                act_date += dt.timedelta(days=1)
+            return hours_before_deadline
+        return 0
+
+    def importance_first_sort(self):
         tasks_with_deadline = []
         tasks_without_deadline = []
+        failed_tasks = set()
         for task in self.tasks:
             if task.deadline is None:
                 tasks_without_deadline.append(task)
             else:
                 tasks_with_deadline.append(task)
         sorted_deadline_tasks = sorted(tasks_with_deadline,
-                                       key=lambda task: (task.importance < 5, task.deadline, 1 / task.interest))
+                                       key=lambda task: (task.importance <= 5, task.deadline, 1 / task.interest))
         sorted_non_deadline_tasks = sorted(tasks_without_deadline,
                                            key=lambda task: (task.importance * task.interest),
                                            reverse=True)
-        for task in (sorted_deadline_tasks + sorted_non_deadline_tasks):
+        for task in sorted_deadline_tasks:
+            # print(f"filling_day={self.filling_day},\n task={task},\n wrk_hrs_bfr_ddln={self.get_act_wk_hrs_bfr_ddln(task.deadline)}")
+            if self.get_act_wk_hrs_bfr_ddln(task.deadline) >= task.work_hours:
+                self.add_task(task, task.work_hours)
+                # print("Задача добавлена", end="\n\n")
+            else:
+                failed_tasks.add(task)
+                # print("Задача не добавлена", end="\n\n")
+        self.failed_tasks = failed_tasks
+        for task in sorted_non_deadline_tasks:
             self.add_task(task, task.work_hours)
+
+    def intrst_frst_imprt_close_ddln_sort(self):
+        pass
+
+    def interest_importance_sort(self):
+        pass
+
+    def validate_allocation(self):
+        failed_tasks = set()
+        for day in self.calendar:
+            for task, work_hours in day.day_schedule.task_schedule.items():
+                if task.deadline is not None and day.date >= task.deadline:
+                    failed_tasks.add(task)
+        self.failed_tasks = failed_tasks
+
+    def print_failed_tasks_rus(self):
+        if len(self.failed_tasks):
+            print("Невыполненные задачи:")
+            for task in self.failed_tasks:
+                task.present_print_rus()
 
     def print_calendar_with_schedule(self):
         for day in self.calendar:
@@ -320,18 +361,6 @@ class Planner:
                     print(f'Делать задачу "{task.name}" на протяжении {work_hours} часов/а')
                 print()
 
-    def validate_allocation(self):
-        failed_tasks = set()
-        for day in self.calendar:
-            for task, work_hours in day.day_schedule.task_schedule.items():
-                if task.deadline is not None and day.date >= task.deadline:
-                    failed_tasks.add(task)
-        self.failed_tasks = failed_tasks
-
-    def print_failed_tasks(self):
-        for task in self.failed_tasks:
-            task.present_print_rus()
-
     @staticmethod
     def get_tasks_from_file(tasks_file_name):
         task_positional_attr_names = ["name"]
@@ -345,12 +374,6 @@ class Planner:
         return manual_days
 
     @staticmethod
-    def get_hours_before_deadline(date, deadline, calendar):
-        # print(type(date_), type(calendar[0].date), type(deadline))
-        days_before_deadline = list(filter(lambda d: date <= d.date < deadline, calendar))
-        return sum(map(lambda d: d.work_hours, days_before_deadline))
-
-    @staticmethod
     def print_present_tasks_rus(tasks: [Task]):
         for task in tasks:
             task.present_print_rus()
@@ -358,57 +381,6 @@ class Planner:
     @staticmethod
     def dt_add_day(date: dt.date):
         return date + dt.timedelta(days=1)
-
-    # @staticmethod
-    # def __deadline_mustdo_sort(tasks):
-    #     new_tasks = []
-    #     deadlines_set = sorted(set(map(lambda task_: task_.deadline, tasks)))
-    #     for deadline in deadlines_set:
-    #         tasks_by_deadline = list(filter(lambda task_: task_.deadline == deadline, tasks))
-    #         for flag in (True, False):
-    #             must_do_tasks = list(filter(lambda task_: task_.must_do == flag, tasks_by_deadline))
-    #             must_do_tasks.sort(key=lambda task_: task_.interest, reverse=True)
-    #             new_tasks.extend(must_do_tasks)
-    #     return new_tasks
-
-    # @staticmethod
-    # def __allocate_tasks(tasks, calendar):
-    #     copy_tasks = deepcopy(tasks)
-    #     new_calendar = deepcopy(calendar)
-    # 
-    #     try:
-    #         tasks_iterator = iter(copy_tasks)
-    #         task_ = next(tasks_iterator)
-    #         task_work_hours = task_.work_hours
-    # 
-    #         calendar_iterator = iter(new_calendar)
-    #         day_ = next(calendar_iterator)
-    #         while day_.is_weekend():
-    #             day_ = next(calendar_iterator)
-    #         day_work_hours = day_.work_hours
-    # 
-    #         task_schedule = day_.task_schedule
-    #         while True:
-    #             if day_work_hours >= task_work_hours:
-    #                 task_schedule[task_.task_id] = task_work_hours
-    #                 day_work_hours -= task_work_hours
-    #                 task_ = next(tasks_iterator)
-    #                 # print("Next task")
-    #                 task_work_hours = task_.work_hours
-    #                 if day_work_hours == 0:
-    #                     day_ = next(calendar_iterator)
-    #                     # print("Next day")
-    #                     day_work_hours = day_.work_hours
-    #                     task_schedule = day_.task_schedule
-    #             else:
-    #                 task_schedule[task_.task_id] = day_work_hours
-    #                 task_work_hours -= day_work_hours
-    #                 day_ = next(calendar_iterator)
-    #                 # print("Next day")
-    #                 day_work_hours = day_.work_hours
-    #                 task_schedule = day_.task_schedule
-    #     except StopIteration:
-    #         return new_calendar
 
     # @staticmethod
     # def smart_sort_v1(tasks, calendar) -> {int: int}:
@@ -600,22 +572,6 @@ class Planner:
     #             break
     # 
     #     return work_hours_list
-
-    # @staticmethod
-    # def allocate_work_hours(work_hours_list, calendar):
-    #     new_calendar = deepcopy(calendar)
-    #     try:
-    #         calendar_iterator = iter(new_calendar)
-    #         day_ = next(calendar_iterator)
-    #         task_schedule = day_.task_schedule
-    #         for task_id_ in work_hours_list:
-    #             while sum(task_schedule.values()) == day_.work_hours:
-    #                 day_ = next(calendar_iterator)
-    #                 task_schedule = day_.task_schedule
-    #             task_schedule[task_id_] = task_schedule.get(task_id_, 0) + 1
-    #     except StopIteration:
-    #         return new_calendar
-    #     return new_calendar
 
     # def create_schedule(self):
     #     schedule = []
