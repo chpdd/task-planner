@@ -1,6 +1,0 @@
-1, deadline=02.01.2024, interest=3, work_hours=4, must_do=True
-2, deadline=02.01.2024, interest=2, work_hours=2, must_do=False
-3, deadline=04.01.2024, interest=5, work_hours=2, must_do=True
-4, deadline=01.02.2024, interest=8, work_hours=10, must_do=False
-5, deadline=05.01.2024, interest=4, work_hours=1, must_do=True
-6, deadline=05.01.2024, interest=3, work_hours=2, must_do=False
