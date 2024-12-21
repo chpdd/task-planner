@@ -9,7 +9,7 @@ def str_to_date(string):
     return dt.datetime.strptime(string, "%d.%m.%Y").date()
 
 
-def read_class_instances(file_name: str, class_init, *pos_args_names: []) -> []:
+def read_class_instances(file_name: str, class_init, pos_args_names: []) -> []:
     result = []
     names_int_args = ("interest", "work_hours", "importance")
     names_date_args = ("deadline")
@@ -26,6 +26,7 @@ def read_class_instances(file_name: str, class_init, *pos_args_names: []) -> []:
             if i < len(pos_args_names):
                 if pos_args_names[i] == "date":
                     arg_str = str_to_date(arg_str)
+                    # print(arg_str)
                 args.append(arg_str)
             else:
                 for symb in "=:":
@@ -49,8 +50,6 @@ def print_instances(input_list: [], *attrs):
 
 
 def to_str_instance(instance, *attrs):
-    # for attr in attrs:
-    #     result = getattr(instance_, attr, "No attr")
     return ", ".join([f"{attr}={getattr(instance, attr, "None")}" for attr in attrs])
 
 
