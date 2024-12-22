@@ -9,7 +9,14 @@ def str_to_date(string):
     return dt.datetime.strptime(string, "%d.%m.%Y").date()
 
 
-def read_class_instances(file_name: str, class_init, pos_args_names: []) -> []:
+def read_class_instances(class_init, file_name: str, pos_args_names: []) -> []:
+    result = []
+    for args, kwargs in read_args_kwargs(file_name, pos_args_names):
+        result.append(class_init(*args, **kwargs))
+    return result
+
+
+def read_args_kwargs(file_name, pos_args_names: []) -> []:
     result = []
     names_int_args = ("interest", "work_hours", "importance")
     names_date_args = ("deadline")
@@ -39,7 +46,7 @@ def read_class_instances(file_name: str, class_init, pos_args_names: []) -> []:
                         elif keyword in names_int_args:
                             arg = int(arg)
                         kwargs[keyword] = arg
-        result.append(class_init(*args, **kwargs))
+        result.append((args, kwargs))
     return result
 
 

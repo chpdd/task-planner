@@ -12,11 +12,9 @@ if __name__ == "__main__":
 
     # start_date = dt.date.today()
     start_date = dt.date(day=16, month=12, year=2024)
-    tasks = Planner.get_tasks_from_file(tasks_file_name)
-    # print(*tasks, sep="\n")
-    manual_days = Planner.get_days_from_file(days_file_name)
-    planner = Planner(tasks=tasks, manual_days=manual_days, start_date=start_date,
-                      dflt_day_work_hours=default_day_work_hours, dflt_task_work_hours=default_task_work_hours)
+    planner = Planner(start_date=start_date, dflt_day_work_hours=default_day_work_hours,
+                      dflt_task_work_hours=default_task_work_hours)
+    planner.read_tasks_days_from_file(tasks_file_name, days_file_name)
 
     # planner.interest_importance_sort()
     planner.print_present_tasks_rus()

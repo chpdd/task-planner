@@ -1,7 +1,7 @@
 import datetime as dt
 from copy import deepcopy, copy
 
-from .utils import date_to_normal_str, read_class_instances, to_str_instance, get_instance_by_attr
+from .utils import date_to_normal_str, read_class_instances, to_str_instance, get_instance_by_attr, read_args_kwargs
 
 
 class Task:
@@ -155,13 +155,12 @@ class Day:
 class Calendar:
     def __init__(self, manual_days: [Day] = None, start_date: dt.date = dt.date.today(),
                  dflt_day_work_hours: int = 4, dflt_task_work_hours: int = 2):
-        self._manual_days = [] if manual_days is None else manual_days
-        self._manual_date_work_hours = {day.date: day.work_hours for day in manual_days}
-        self._dflt_day_work_hours = dflt_day_work_hours
-        self._dflt_task_work_hours = dflt_task_work_hours
+        self._manual_days: [Day] = [] if manual_days is None else manual_days
+        self._manual_date_work_hours: {dt.date: int} = {day.date: day.work_hours for day in self.manual_days}
+        self._dflt_day_work_hours: int = dflt_day_work_hours
+        self._dflt_task_work_hours: int = dflt_task_work_hours
         self._start_date = start_date
-        self._actual_date = start_date
-        self._start_date = start_date
+        self._actual_date: dt.date = start_date
         self._days: [Day] = []
         self._filling_day_index: int = -1
 
@@ -196,6 +195,19 @@ class Calendar:
     @dflt_task_work_hours.setter
     def dflt_task_work_hours(self, work_hours: int):
         self._dflt_task_work_hours = work_hours
+
+    @property
+    def manual_days(self):
+        return self._manual_days
+
+    @manual_days.setter
+    def manual_days(self, manual_days: [Day]):
+        self._manual_days = manual_days
+        self._manual_date_work_hours: {dt.date: int} = {day.date: day.work_hours for day in manual_days}
+
+    @property
+    def manual_date_work_hours(self):
+        return self._manual_date_work_hours
 
     def reset_days(self):
         self._days: [Day] = []
@@ -236,20 +248,23 @@ class Calendar:
 
 
 class Planner:
-    def __init__(self, tasks: [Task], manual_days: [Day] = None, start_date: dt.date = dt.date.today(),
+    def __init__(self, tasks: [Task] = None, manual_days: [Day] = None, start_date: dt.date = dt.date.today(),
                  dflt_day_work_hours: int = 4, dflt_task_work_hours: int = 2):
-        self._tasks = tasks
+        self._tasks = [] if tasks is None else tasks
         self._calendar: [Day] = Calendar(manual_days=manual_days, start_date=start_date,
                                          dflt_day_work_hours=dflt_day_work_hours,
                                          dflt_task_work_hours=dflt_task_work_hours)
+        self._hours_before_date: {dt.date: int} = {}
+        self._added_hours = 0
+        self._failed_tasks: [Task] = []
 
     @property
     def tasks(self):
         return self._tasks
 
-    @property
-    def calendar(self):
-        return self._calendar
+    @tasks.setter
+    def tasks(self, tasks: [Task]):
+        self._tasks = tasks
 
     @property
     def dflt_day_work_hours(self) -> int:
@@ -285,10 +300,22 @@ class Planner:
 
     def add_task(self, task: Task, work_hours: int):
         self.calendar.add_task(task, work_hours)
+        self._added_hours += work_hours
 
     def pre_sort_clean(self):
         self.calendar.reset_days()
         self.failed_tasks: {Task} = set()
+
+    def init_hours_before_date(self):
+        act_date = self.calendar.start_date
+        max_deadline_date = max(self.tasks, key=lambda task: task.deadline)
+        hours_before_date = {}
+        hours_counter = 0
+        while act_date < max_deadline_date:
+            hours_counter += self.calendar.manual_date_work_hours.get(act_date, self.calendar.dflt_day_work_hours)
+            hours_before_date[act_date] = hours_counter
+            act_date += dt.timedelta(days=1)
+        return hours_before_date
 
     def importance_first_sort(self):
         self.pre_sort_clean()
@@ -342,6 +369,25 @@ class Planner:
                     failed_tasks.add(task)
         self.failed_tasks = failed_tasks
 
+    def read_tasks_from_file(self, tasks_file_name):
+        task_positional_attr_names = ["name"]
+        tasks: [Task] = []
+        for args, kwargs in read_args_kwargs(tasks_file_name, task_positional_attr_names):
+            kwargs["work_hours"] = kwargs.get("work_hours", self.calendar.dflt_task_work_hours)
+            tasks.append(Task(*args, **kwargs))
+        self.tasks = tasks
+
+    def read_days_from_file(self, days_file_name):
+        day_pos_attr_names = ["date"]
+        manual_days: [Day] = []
+        for args, kwargs in read_args_kwargs(days_file_name, day_pos_attr_names):
+            manual_days.append(Day(*args, **kwargs))
+        self.calendar.manual_days = manual_days
+
+    def read_tasks_days_from_file(self, tasks_file_name, days_file_name):
+        self.read_tasks_from_file(tasks_file_name)
+        self.read_days_from_file(days_file_name)
+
     def print_present_tasks_rus(self):
         if len(self.tasks):
             print("Все задачи")
@@ -371,22 +417,6 @@ class Planner:
                 for task, work_hours in day.schedule.items():
                     print(f'Делать задачу "{task.name}" на протяжении {work_hours} часов/а')
                 print()
-
-    @staticmethod
-    def get_tasks_from_file(tasks_file_name):
-        task_positional_attr_names = ["name"]
-        tasks = read_class_instances(tasks_file_name, Task, task_positional_attr_names)
-        return tasks
-
-    @staticmethod
-    def get_days_from_file(days_file_name):
-        day_pos_attr_names = ["date"]
-        manual_days = read_class_instances(days_file_name, Day, day_pos_attr_names)
-        return manual_days
-
-    @staticmethod
-    def dt_add_day(date: dt.date):
-        return date + dt.timedelta(days=1)
 
     # @staticmethod
     # def smart_sort_v1(tasks, calendar) -> {int: int}:
