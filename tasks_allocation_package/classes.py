@@ -9,7 +9,7 @@ class Task:
     __id_counter = 0
 
     def __init__(self, name: str, deadline: dt.date = None, interest: int = 5, work_hours: int = 2,
-                 importance: int = 5):
+                 importance: int = 5) -> None:
         self._id = Task.__generate_id()
         self._name = name
         self._deadline = deadline
@@ -17,117 +17,123 @@ class Task:
         self._work_hours = work_hours
         self._importance = importance
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"Task with id: {self.id}, name: {self.name}, deadline: {self.deadline}, "
                 f"interest: {self.interest}/10, work_hours: {self.work_hours}, "
                 f"importance: {self.importance}/10 ")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"Task(task_id={self.id}, name={self.name}, deadline={self.deadline}, "
                 f"interest={self.interest}, work_hours={self.work_hours}, "
                 f"importance={self.importance})")
 
     @classmethod
-    def __generate_id(cls):
+    def __generate_id(cls) -> int:
         task_id = cls.__id_counter
         cls.__id_counter += 1
         return task_id
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self._id
 
     @property
-    def interest(self):
+    def interest(self) -> int:
         return self._interest
 
     @interest.setter
-    def interest(self, interest):
+    def interest(self, interest) -> None:
         self._interest = interest
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @name.setter
-    def name(self, name):
+    def name(self, name) -> None:
         self._name = name
 
     @property
-    def deadline(self):
+    def deadline(self) -> dt.date:
         return self._deadline
 
     @deadline.setter
-    def deadline(self, deadline: dt.date):
+    def deadline(self, deadline: dt.date) -> None:
         self._deadline = deadline
 
     @property
-    def importance(self):
+    def importance(self) -> int:
         return self._importance
 
     @importance.setter
-    def importance(self, importance):
+    def importance(self, importance: int) -> None:
         self._importance = importance
 
     @property
-    def work_hours(self):
+    def work_hours(self) -> int:
         return self._work_hours
 
     @work_hours.setter
-    def work_hours(self, work_hours):
+    def work_hours(self, work_hours: int) -> None:
         self._work_hours = work_hours
 
     @property
-    def sum_interest(self):
+    def sum_interest(self) -> int:
         return self._work_hours * self.interest
 
-    def present_print_rus(self):
+    def has_deadline(self) -> bool:
+        if self.deadline is not None:
+            return True
+        return False
+
+    def present_print_rus(self) -> None:
         print(f"{self.id}. {self.name}, "
-              f"{f"дедлайн {date_to_normal_str(self.deadline)}" if self.deadline is not None else ""}, интерес: {self.interest}/10,"
+              f"{f"дедлайн {date_to_normal_str(self.deadline)}" if self.deadline is not None else ""},"
+              f" интерес: {self.interest}/10,"
               f" время выполнения в часах: {self.work_hours}, важность: {self.importance}")
 
 
 class Day:
-    def __init__(self, date: dt.date, work_hours: int = 2, schedule: {Task: int} = None):
+    def __init__(self, date: dt.date, work_hours: int = 2, schedule: {Task: int} = None) -> None:
         self._date = date
         self._work_hours = work_hours
         self._schedule: {Task: int} = {} if schedule is None else schedule
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Day(date={self.date}, day_work_hours={self.work_hours}, task_schedule=\n{self.schedule})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Day date: {self.date}, day_work_hours={self.work_hours}, task_schedule: \n{self.schedule}"
 
     @property
-    def date(self):
+    def date(self) -> dt.date:
         return self._date
 
     @date.setter
-    def date(self, date):
+    def date(self, date: dt.date) -> None:
         self._date = date
 
     @property
-    def work_hours(self):
+    def work_hours(self) -> int:
         return self._work_hours
 
     @work_hours.setter
-    def work_hours(self, work_hours):
+    def work_hours(self, work_hours: int) -> None:
         self._work_hours = work_hours
 
     @property
-    def schedule(self):
+    def schedule(self) -> {Task: int}:
         return self._schedule
 
     @schedule.setter
-    def schedule(self, schedule):
+    def schedule(self, schedule: {Task: int}) -> None:
         self._schedule = schedule
 
     @property
-    def sum_hours(self):
+    def sum_hours(self) -> int:
         return sum(self.schedule.values())
 
-    def add_task(self, task: Task, work_hours: int):
+    def add_task(self, task: Task, work_hours: int) -> (Task, int):
         if self.sum_hours + work_hours <= self.work_hours:
             add_work_hours = work_hours
         else:
@@ -136,17 +142,17 @@ class Day:
         self.schedule[task] = self.schedule.get(task, 0) + add_work_hours
         return task, return_work_hours
 
-    def is_weekend(self):
+    def is_weekend(self) -> bool:
         if self.work_hours == 0:
             return True
         return False
 
-    def is_task_filled(self):
+    def is_task_filled(self) -> bool:
         if self.work_hours == self.sum_hours:
             return True
         return False
 
-    def has_tasks(self):
+    def has_tasks(self) -> bool:
         if len(self.schedule) != 0:
             return True
         return False
@@ -154,7 +160,7 @@ class Day:
 
 class Calendar:
     def __init__(self, manual_days: [Day] = None, start_date: dt.date = dt.date.today(),
-                 dflt_day_work_hours: int = 4, dflt_task_work_hours: int = 2):
+                 dflt_day_work_hours: int = 4, dflt_task_work_hours: int = 2) -> None:
         self._manual_days: [Day] = [] if manual_days is None else manual_days
         self._manual_date_work_hours: {dt.date: int} = {day.date: day.work_hours for day in self.manual_days}
         self._dflt_day_work_hours: int = dflt_day_work_hours
@@ -166,76 +172,77 @@ class Calendar:
 
         self.next_filling_day()
 
-    def __getitem__(self, item):
-        return self._days[item]
+    def __getitem__(self, index: int) -> Day:
+        return self._days[index]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._days)
 
     @property
-    def start_date(self):
+    def start_date(self) -> dt.date:
         return self._start_date
 
     @property
-    def _filling_day(self):
+    def _filling_day(self) -> Day:
         return self._days[self._filling_day_index]
 
     @property
-    def dflt_day_work_hours(self):
+    def dflt_day_work_hours(self) -> int:
         return self._dflt_day_work_hours
 
     @dflt_day_work_hours.setter
-    def dflt_day_work_hours(self, work_hours: int):
+    def dflt_day_work_hours(self, work_hours: int) -> None:
         self._dflt_day_work_hours = work_hours
 
     @property
-    def dflt_task_work_hours(self):
+    def dflt_task_work_hours(self) -> int:
         return self._dflt_task_work_hours
 
     @dflt_task_work_hours.setter
-    def dflt_task_work_hours(self, work_hours: int):
+    def dflt_task_work_hours(self, work_hours: int) -> None:
         self._dflt_task_work_hours = work_hours
 
     @property
-    def manual_days(self):
+    def manual_days(self) -> [Day]:
         return self._manual_days
 
     @manual_days.setter
-    def manual_days(self, manual_days: [Day]):
+    def manual_days(self, manual_days: [Day]) -> None:
         self._manual_days = manual_days
         self._manual_date_work_hours: {dt.date: int} = {day.date: day.work_hours for day in manual_days}
+        self.reset_days()
 
     @property
-    def manual_date_work_hours(self):
+    def manual_date_work_hours(self) -> {dt.date: int}:
         return self._manual_date_work_hours
 
-    def reset_days(self):
+    def reset_days(self) -> None:
         self._days: [Day] = []
         self._filling_day_index: int = -1
         self._actual_date = self.start_date
         self.next_filling_day()
 
-    def increment_act_date(self):
+    def increment_act_date(self) -> None:
         self._actual_date += dt.timedelta(days=1)
 
-    def add_day(self):
+    def add_day(self) -> None:
         date = self._actual_date
         work_hours = self._manual_date_work_hours.get(date, self.dflt_day_work_hours)
         self._days.append(Day(date=date, work_hours=work_hours))
         self.increment_act_date()
 
-    def next_filling_day(self):
+    def next_filling_day(self) -> None:
         self.add_day()
         self._filling_day_index += 1
 
-    def add_task(self, task: Task, work_hours: int):
+    def add_task(self, task: Task, work_hours: int) -> None:
         while work_hours:
             day = self._filling_day
             task, work_hours = day.add_task(task, work_hours)
             if day.is_task_filled():
                 self.next_filling_day()
 
-    def get_work_hours_before_deadline(self, deadline: dt.date):
+    def get_work_hours_before_deadline(self, deadline: dt.date) -> int:
         act_date = self._filling_day.date
         if act_date < deadline:
             hours_before_deadline = self._filling_day.work_hours - self._filling_day.sum_hours
@@ -249,29 +256,54 @@ class Calendar:
 
 class Planner:
     def __init__(self, tasks: [Task] = None, manual_days: [Day] = None, start_date: dt.date = dt.date.today(),
-                 dflt_day_work_hours: int = 4, dflt_task_work_hours: int = 2):
+                 dflt_day_work_hours: int = 4, dflt_task_work_hours: int = 2) -> None:
         self._tasks = [] if tasks is None else tasks
+        self._deadline_tasks = []
+        self._no_deadline_tasks = []
         self._calendar: [Day] = Calendar(manual_days=manual_days, start_date=start_date,
                                          dflt_day_work_hours=dflt_day_work_hours,
                                          dflt_task_work_hours=dflt_task_work_hours)
-        self._hours_before_date: {dt.date: int} = {}
-        self._added_hours = 0
+        self._hours_before_date_dict: {dt.date: int} = {}
+        self._added_hours: int = 0
         self._failed_tasks: [Task] = []
 
+        self._init_filter_tasks()
+        self._init_hours_before_date_dict()
+
     @property
-    def tasks(self):
+    def tasks(self) -> [Task]:
         return self._tasks
 
     @tasks.setter
-    def tasks(self, tasks: [Task]):
+    def tasks(self, tasks: [Task]) -> None:
         self._tasks = tasks
+        self.clean_calendar()
+        self._init_filter_tasks()
+        self._init_hours_before_date_dict()
+
+    @property
+    def manual_days(self) -> [Day]:
+        return self.calendar.manual_days
+
+    @manual_days.setter
+    def manual_days(self, manual_days: [Day]) -> None:
+        self.calendar.manual_days = manual_days
+        self._init_hours_before_date_dict()
+
+    @property
+    def deadline_tasks(self) -> [Task]:
+        return self._deadline_tasks
+
+    @property
+    def no_deadline_tasks(self) -> [Task]:
+        return self._no_deadline_tasks
 
     @property
     def dflt_day_work_hours(self) -> int:
         return self.calendar.dflt_day_work_hours
 
     @dflt_day_work_hours.setter
-    def dflt_day_work_hours(self, dflt_day_work_hours: int):
+    def dflt_day_work_hours(self, dflt_day_work_hours: int) -> None:
         self.calendar.dflt_day_work_hours = dflt_day_work_hours
 
     @property
@@ -279,97 +311,100 @@ class Planner:
         return self.calendar.dflt_task_work_hours
 
     @dflt_task_work_hours.setter
-    def dflt_task_work_hours(self, dflt_task_work_hours: int):
+    def dflt_task_work_hours(self, dflt_task_work_hours: int) -> None:
         self.calendar.dflt_task_work_hours = dflt_task_work_hours
 
     @property
-    def calendar(self):
+    def calendar(self) -> Calendar:
         return self._calendar
 
-    @calendar.setter
-    def calendar(self, calendar):
-        self._calendar = calendar
-
     @property
-    def failed_tasks(self):
+    def failed_tasks(self) -> {Task}:
         return self._failed_tasks
 
     @failed_tasks.setter
-    def failed_tasks(self, tasks: [Task]):
+    def failed_tasks(self, tasks: {Task}) -> None:
         self._failed_tasks = tasks
 
-    def add_task(self, task: Task, work_hours: int):
+    def _init_filter_tasks(self) -> None:
+        deadline_tasks = []
+        no_deadline_tasks = []
+        for task in self.tasks:
+            if task.deadline:
+                deadline_tasks.append(task)
+            else:
+                no_deadline_tasks.append(task)
+        self._deadline_tasks = deadline_tasks
+        self._no_deadline_tasks = no_deadline_tasks
+
+    def _init_hours_before_date_dict(self) -> None:
+        hours_before_date_dict: {dt.date: int} = {}
+        if len(self.tasks):
+            act_date = self.calendar.start_date
+            max_deadline_date = max(self.deadline_tasks, key=lambda task: task.deadline).deadline
+            hours_counter = 0
+            while act_date < max_deadline_date:
+                hours_counter += self.calendar.manual_date_work_hours.get(act_date, self.calendar.dflt_day_work_hours)
+                hours_before_date_dict[act_date + dt.timedelta(days=1)] = hours_counter
+                act_date += dt.timedelta(days=1)
+        self._hours_before_date_dict = hours_before_date_dict
+        self._added_hours = 0
+
+    def add_task(self, task: Task, work_hours: int) -> None:
         self.calendar.add_task(task, work_hours)
         self._added_hours += work_hours
 
-    def pre_sort_clean(self):
+    def clean_calendar(self) -> None:
         self.calendar.reset_days()
         self.failed_tasks: {Task} = set()
 
-    def init_hours_before_date(self):
-        act_date = self.calendar.start_date
-        max_deadline_date = max(self.tasks, key=lambda task: task.deadline)
-        hours_before_date = {}
-        hours_counter = 0
-        while act_date < max_deadline_date:
-            hours_counter += self.calendar.manual_date_work_hours.get(act_date, self.calendar.dflt_day_work_hours)
-            hours_before_date[act_date] = hours_counter
-            act_date += dt.timedelta(days=1)
-        return hours_before_date
+    def _hours_before_date(self, date: dt.date) -> int:
+        return self._hours_before_date_dict.get(date, None) - self._added_hours
 
-    def importance_first_sort(self):
-        self.pre_sort_clean()
-        tasks_with_deadline = []
-        tasks_without_deadline = []
+    def allocate_tasks(self, tasks) -> None:
+        self.clean_calendar()
         failed_tasks = set()
-        for task in self.tasks:
-            if task.deadline is None:
-                tasks_without_deadline.append(task)
+
+        for task in tasks:
+            if task.deadline and self._hours_before_date(task.deadline) >= task.work_hours:
+                self.add_task(task, task.work_hours)
             else:
-                tasks_with_deadline.append(task)
-        sorted_deadline_tasks = sorted(tasks_with_deadline,
+                failed_tasks.add(task)
+        self.failed_tasks = failed_tasks
+
+    def importance_first_sort(self) -> None:
+        sorted_deadline_tasks = sorted(self.deadline_tasks,
                                        key=lambda task: (task.importance <= 5, task.deadline, 1 / task.interest))
-        sorted_non_deadline_tasks = sorted(tasks_without_deadline,
-                                           key=lambda task: (task.importance * task.interest),
-                                           reverse=True)
-        for task in sorted_deadline_tasks:
-            if self.calendar.get_work_hours_before_deadline(task.deadline) >= task.work_hours:
-                self.add_task(task, task.work_hours)
-                # print("Задача добавлена", end="\n\n")
-            else:
-                failed_tasks.add(task)
-                # print("Задача не добавлена", end="\n\n")
-        for task in sorted_non_deadline_tasks:
-            self.add_task(task, task.work_hours)
-        self.failed_tasks = failed_tasks
+        sorted_no_deadline_tasks = sorted(self.no_deadline_tasks,
+                                          key=lambda task: (task.importance * task.interest),
+                                          reverse=True)
+        self.allocate_tasks(sorted_deadline_tasks + sorted_no_deadline_tasks)
 
-    def interest_first_sort(self):
-        self.pre_sort_clean()
+    def interest_first_sort(self) -> None:
+        sorted_tasks = sorted(self.tasks, key=lambda task: (task.interest, task.importance, task.has_deadline()),
+                              reverse=True)
+        self.allocate_tasks(sorted_tasks)
 
-    def interest_importance_sort(self):
-        self.pre_sort_clean()
-        failed_tasks = set()
-        sorted_tasks = sorted(self.tasks, key=lambda task: task.interest * task.importance)
-        for task in sorted_tasks:
-            if task.deadline and self.calendar.get_work_hours_before_deadline(task.deadline) >= task.work_hours:
-                self.add_task(task, task.work_hours)
-                # print("Задача добавлена", end="\n\n")
-            else:
-                failed_tasks.add(task)
-        self.failed_tasks = failed_tasks
+    def interest_importance_sort(self) -> None:
+        sorted_tasks = sorted(self.tasks, key=lambda task: task.interest * task.importance, reverse=True)
+        self.allocate_tasks(sorted_tasks)
 
-    def procrastinate_sort(self):
-        self.pre_sort_clean()
+    def procrastinate_sort(self) -> None:
+        pass
 
-    def validate_allocation(self):
+    def custom_sort(self, func, reverse: bool = False) -> None:
+        sorted_tasks = sorted(self.tasks, key=func, reverse=reverse)
+        self.allocate_tasks(sorted_tasks)
+
+    def validate_allocation(self) -> None:
         failed_tasks = set()
         for day in self.calendar:
-            for task, work_hours in day.day_schedule.task_schedule.items():
+            for task, work_hours in day.schedule.items():
                 if task.deadline is not None and day.date >= task.deadline:
                     failed_tasks.add(task)
         self.failed_tasks = failed_tasks
 
-    def read_tasks_from_file(self, tasks_file_name):
+    def read_tasks_from_file(self, tasks_file_name: str) -> None:
         task_positional_attr_names = ["name"]
         tasks: [Task] = []
         for args, kwargs in read_args_kwargs(tasks_file_name, task_positional_attr_names):
@@ -377,46 +412,50 @@ class Planner:
             tasks.append(Task(*args, **kwargs))
         self.tasks = tasks
 
-    def read_days_from_file(self, days_file_name):
+    def read_days_from_file(self, days_file_name: str) -> None:
         day_pos_attr_names = ["date"]
         manual_days: [Day] = []
         for args, kwargs in read_args_kwargs(days_file_name, day_pos_attr_names):
             manual_days.append(Day(*args, **kwargs))
-        self.calendar.manual_days = manual_days
+        self.manual_days = manual_days
 
-    def read_tasks_days_from_file(self, tasks_file_name, days_file_name):
-        self.read_tasks_from_file(tasks_file_name)
+    def read_tasks_days_from_file(self, tasks_file_name: str, days_file_name: str) -> None:
         self.read_days_from_file(days_file_name)
+        self.read_tasks_from_file(tasks_file_name)
 
-    def print_present_tasks_rus(self):
+    def print_present_tasks_rus(self) -> None:
         if len(self.tasks):
             print("Все задачи")
             for task in self.tasks:
                 task.present_print_rus()
+        print()
 
-    def print_failed_tasks_rus(self):
+    def print_failed_tasks_rus(self) -> None:
         if len(self.failed_tasks):
             print("Невыполненные задачи:")
             for task in self.failed_tasks:
                 task.present_print_rus()
+        print()
 
-    def print_calendar_with_schedule(self):
+    def print_calendar_with_schedule(self) -> None:
         for day in self.calendar:
             if day.has_tasks():
                 print(f"Day {day.date} with work_hours={day.work_hours} have tasks:")
-                for task, work_hours in day.day_schedule.task_schedule.items():
+                for task, work_hours in day.schedule.items():
                     output_attrs = ["name", "deadline", "interest", "importance"]
                     print(f"{work_hours} work hours at {to_str_instance(task, *output_attrs)}")
                 print()
+        print()
 
-    def print_calendar_with_schedule_rus(self):
+    def print_calendar_with_schedule_rus(self) -> None:
         print("Календарь с распределёнными задачами:")
         for day in self.calendar:
             if day.has_tasks():
                 print(f"{(date_to_normal_str(day.date))} есть {day.work_hours} рабочий/их час/ов:")
                 for task, work_hours in day.schedule.items():
-                    print(f'Делать задачу "{task.name}" на протяжении {work_hours} часов/а')
+                    print(f'Делать {task} на протяжении {work_hours} часов/а')
                 print()
+        print()
 
     # @staticmethod
     # def smart_sort_v1(tasks, calendar) -> {int: int}:
