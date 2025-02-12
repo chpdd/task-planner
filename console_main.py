@@ -10,7 +10,6 @@ if __name__ == "__main__":
     default_task_work_hours = 2
     default_day_work_hours = 4
 
-    # start_date = dt.date(day=30, month=1, year=2025)
     start_date = dt.date.today()
     tasks = Planner.read_tasks_from_file(tasks_file_name, default_task_work_hours)
     days = Planner.read_days_from_file(days_file_name, default_day_work_hours)

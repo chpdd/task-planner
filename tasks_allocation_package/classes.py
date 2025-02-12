@@ -1,8 +1,6 @@
 import datetime as dt
-from copy import deepcopy, copy
-from collections import namedtuple
 
-from .utils import date_to_normal_str, read_class_instances, to_str_instance, get_instance_by_attr, read_args_kwargs
+from .utils import date_to_normal_str, to_str_instance, read_args_kwargs
 
 
 class Task:
@@ -91,7 +89,8 @@ class Task:
         print_str = f"{self.id}. {self.name},"
         if self.deadline:
             print_str += f" дедлайн {date_to_normal_str(self.deadline)}"
-        print_str += f" интерес: {self.interest}/10, время выполнения в часах: {self.work_hours}, важность: {self.importance}"
+        print_str += (f" интерес: {self.interest}/10, время выполнения в часах: {self.work_hours},"
+                      f" важность: {self.importance}")
         print(print_str)
 
 
@@ -105,11 +104,6 @@ class Day:
         return f"Day(date={self.date}, day_work_hours={self.work_hours}, task_schedule={self.schedule})"
 
     def __str__(self) -> str:
-        # return_str = f"Day date: {self.date}, day_work_hours={self.work_hours}, task_schedule: "
-        # if len(self.schedule):
-        #     return_str += f"\n{self.schedule}"
-        # else:
-        #     return_str += f"{self.schedule}"
         return f"Day date: {self.date}, day_work_hours={self.work_hours}, task_schedule: {self.schedule}"
 
     @property
@@ -170,6 +164,7 @@ class Day:
         if len(self.schedule) != 0:
             return True
         return False
+
 
 class Calendar:
     def __init__(self, manual_days: [Day] = None, start_date: dt.date = dt.date.today(),
@@ -236,15 +231,10 @@ class Calendar:
     def init_days(self, max_date: dt.date = None) -> None:
         max_date = self.start_date if max_date is None else max_date
         self._days: [Day] = []
-        print(f"max_date: {date_to_normal_str(max_date)}")
         while self._last_added_day_date <= max_date:
-            print(f"last_added_day:{date_to_normal_str(self._last_added_day_date)} <= {date_to_normal_str(max_date)}")
             self.add_day()
         self._near_fillable_day_index: int = -1
         self.next_fillable_day()
-        print(f"len days={len(self.days)}")
-        print(f"days:\n{self.days}")
-        print(f"last_added_day_date={date_to_normal_str(self._last_added_day_date)}")
 
     def clean_calendar(self):
         for day in self.days:
@@ -303,6 +293,7 @@ class Calendar:
             while self.days[day_i].is_task_filled():
                 day_i -= 1
             task, work_hours = self.days[day_i].add_task(task, work_hours)
+
     def get_free_hours_before_date(self, left_date: dt.date, right_date: dt.date) -> int:
         result = 0
         while right_date >= self._last_added_day_date:
@@ -415,7 +406,7 @@ class Planner:
 
     def print_present_tasks_rus(self) -> None:
         if len(self.tasks):
-            print("Все задачи")
+            print("Все задачи:")
             for task in self.tasks:
                 task.present_print_rus()
         print()
@@ -425,7 +416,7 @@ class Planner:
             print("Невыполненные задачи:")
             for task in self.failed_tasks:
                 task.present_print_rus()
-        print()
+            print()
 
     def print_calendar_with_schedule(self) -> None:
         for day in self.calendar:
@@ -443,9 +434,8 @@ class Planner:
             if day.has_tasks():
                 print(f"{(date_to_normal_str(day.date))} есть {day.work_hours} рабочий/их час/ов:")
                 for task, work_hours in day.schedule.items():
-                    print(f'Делать {task} на протяжении {work_hours} часов/а')
+                    print(f'Делать "{task.name}" на протяжении {work_hours} часов/а')
                 print()
-        print()
 
     def add_task(self, task: Task, work_hours: int = None) -> None:
         work_hours = task.work_hours if work_hours is None else work_hours
@@ -460,17 +450,12 @@ class Planner:
         return self.calendar.get_free_hours_before_date(left_date, right_date)
 
     def can_place_task_before_date(self, work_hours: int, date: dt.date) -> bool:
-        print(f"Can place {work_hours} hours before date={date_to_normal_str(date)}?")
         sum_hours = 0
         for day in self.calendar.days[::-1]:
-            print(date_to_normal_str(day.date), end=" ")
             if day.date < date:
                 sum_hours += day.free_hours
-                print(f"< {date_to_normal_str(date)}, sum_hours={sum_hours}")
                 if sum_hours >= work_hours:
                     return True
-            else:
-                print(f">= {date_to_normal_str(date)}, sum_hours={sum_hours}")
         return False
 
     def clean_calendar(self) -> None:
@@ -525,16 +510,12 @@ class Planner:
         self.allocate_tasks(sorted_tasks)
 
     def force_procrastinate_sort(self):
-        imp_srt = sorted(self._deadline_tasks, key=lambda task: (1 / task.importance, task.deadline, 1 / task.interest))
-        int_srt = sorted(self._no_deadline_tasks, key=lambda task: (task.interest, task.importance), reverse=True)
-        print("Imp srt", *imp_srt, sep="\n")
-        print("Int srt", *int_srt, sep="\n")
+        imp_srt = sorted(self._deadline_tasks, key=lambda t: (1 / t.importance, t.deadline, 1 / t.interest))
+        int_srt = sorted(self._no_deadline_tasks, key=lambda t: (t.interest, t.importance), reverse=True)
         self.clean_calendar()
         failed_tasks = set()
 
         for task in imp_srt:
-            print(
-                f"{task.name} with {task.work_hours} work_hours can be placed? {self.can_place_task_before_date(task.work_hours, task.deadline)}")
             if self.can_place_task_before_date(task.work_hours, task.deadline):
                 self.add_task_before_date(task)
             else:
@@ -543,117 +524,3 @@ class Planner:
         for task in int_srt:
             self.add_task(task)
         self.failed_tasks = failed_tasks
-
-    def procrastinate_sort_v1(self) -> None:
-
-        def check_deadlines(tasks: [Task], added_hours: int = self._added_hours):
-            CheckResult = namedtuple("CheckResult", ["close_deadline", "task", "max_free_hours"])
-            tasks_free_hours = []
-            for task in filter(lambda t: t in self.deadline_tasks, tasks):
-                task_free_hours = self._hours_before_date(task.deadline,
-                                                          added_hours=self._added_hours + 1) - task.work_hours
-                if task_free_hours >= 0:
-                    tasks_free_hours.append([task, task_free_hours])
-
-            def rec(task_hours_pairs: [(Task, int)] = tasks_free_hours,
-                    added_hours: int = added_hours, min_free_hours: int = None) -> CheckResult:
-                result = CheckResult(close_deadline=False, task=task, max_free_hours=min_free_hours)
-                if len(task_hours_pairs) == 0:
-                    return result
-                for i in range(len(task_hours_pairs)):
-                    for j in range(len(task_hours_pairs)):
-                        if i != j:
-                            task_hours_pairs[j][1] -= task.work_hours
-                    print(f"main task id={i} -> " + ", ".join(
-                        map(lambda pair: f"{pair[0].id}:{pair[1]}", task_hours_pairs)))
-                    min_hours_task = min(task_hours_pairs, key=lambda pair: pair[1])
-                    min_free_hours = min(min_free_hours, min_hours_task[1]) if min_free_hours is not None else \
-                        min_hours_task[1]
-                    result = CheckResult(close_deadline=False, task=task, max_free_hours=min_free_hours)
-                    # if min_hours_task[1] < 0:
-                    #     return CheckResult(close_deadline=True, task=min_hours_task[0], max_free_hours=max_free_hours)
-                    rec_result = rec(task_hours_pairs[:i] + task_hours_pairs[i + 1:],
-                                     added_hours + task_hours_pairs[i][0].work_hours, min_free_hours)
-                    print(result, rec_result)
-                    # if result.max_free_hours is None:
-                    #     result.max_free_hours = CheckResult(close_deadline=result.close_deadline,
-                    #                                         task=result.close_deadline,
-                    #                                         max_free_hours=rec_result.max_free_hours)
-                    # elif rec_result.max_free_hours is None:
-                    #     result.max_free_hours = CheckResult(close_deadline=rec_result.close_deadline,
-                    #                                         task=result.close_deadline,
-                    #                                         max_free_hours=rec_result.max_free_hours)
-                    result = max(result, rec_result, key=lambda res: res.max_free_hours)
-
-                return result
-
-            return rec()
-
-        self.clean_calendar()
-        failed_tasks = set()
-        srt_tasks = sorted(self.tasks, key=lambda task: (1 / task.interest, 1 / task.importance, task.deadline))
-        index = 0
-        check_result = check_deadlines(srt_tasks[index:], self._added_hours)
-        print(check_result)
-        # while len(srt_tasks):
-        #     while srt_tasks[i].work_hours == 0 or srt_tasks[i].work_hours > self._hours_before_date(srt_tasks[i].deadline):
-        #         i += 1
-        #         if i < len(srt_tasks):
-        #             task = srt_tasks[i]
-        #         else:
-        #             break
-
-        #
-        # while srt_int[int_i] not in tasks_set or srt_int[int_i].work_hours == 0 or srt_int[
-        #     int_i].work_hours > self._hours_before_date(srt_int[int_i].deadline):
-        #     tasks_set.discard(srt_int[int_i])
-        #     int_i += 1
-        #     if int_i < len(srt_int):
-        #         int_task = srt_int[int_i]
-        #     else:
-        #         break
-        # while imp_i < len(srt_imp) and (
-        #         srt_imp[imp_i] not in tasks_set or srt_imp[imp_i].work_hours == 0 or srt_imp[
-        #     imp_i].work_hours > self._hours_before_date(
-        #     srt_imp[imp_i].deadline)):
-        #     tasks_set.discard(srt_imp[imp_i])
-        #     imp_i += 1
-        # if imp_i < len(srt_imp):
-        #     imp_task = srt_imp[imp_i]
-        # else:
-        #     break
-        # print("Входим в рекурсию")
-        # check_result = check_deadlines(srt_imp[imp_i:], self._added_hours + 1)
-        # if not check_result.close_deadline and int_i < len(srt_int):
-        #     if imp_i > len(srt_imp):
-        #         for srt:
-        #             self.add_task()
-        #     self.add_task(int_task, 1)
-        #     print(f"Добавляем 1 час {int_task}")
-        #     int_task.work_hours -= 1
-        # elif check_result.close_deadline and imp_i < len(srt_imp):
-        #     self.add_task(imp_task, 1)
-        #     print(f"Добавляем 1 часов {imp_task}")
-        #     imp_task.work_hours -= 1
-
-        self.failed_tasks = failed_tasks
-
-    def procrastinate_sort_v2(self) -> None:
-        def check_deadlines_rec_v2(tasks: [Task], added_hours: int = self._added_hours, max_added_hours: int = None):
-            print(tasks)
-            if len(tasks) == 0:
-                return CheckResult(close_deadline=False, task=None, max_added_hours=max_added_hours)
-            max_added_hours = min(list(map(lambda t: t.work_hours, tasks)) + [max_added_hours])
-            for i in range(len(tasks)):
-                task = tasks[i]
-                task_free_hours_to_deadline = self._hours_before_date(task.deadline, added_hours) - task.work_hours
-                if task_free_hours_to_deadline == 0:
-                    return CheckResult(close_deadline=True, task=task, max_added_hours=0)
-                next_tasks = tasks[:i] + tasks[i + 1:]
-                return check_deadlines_rec(next_tasks, added_hours + task.work_hours, max_added_hours)
-
-    def rec_sort(self) -> None:
-        """
-        sorting, where we count the different types of sorting and choose the one with the most points
-        """
-        pass
