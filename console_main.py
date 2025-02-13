@@ -17,7 +17,27 @@ if __name__ == "__main__":
                          dflt_task_work_hours=default_task_work_hours)
 
     # planner.interest_importance_sort()
-    planner.print_present_tasks_rus()
-    planner.force_procrastinate_sort()
-    planner.print_failed_tasks_rus()
-    planner.print_calendar_with_schedule_rus()
+    print(planner.present_tasks_str_rus(), end="")
+    allocation_types = [
+        (Planner.importance_allocation, "Распределение по важности"),
+        (Planner.interest_allocation, "Распределение по интересу"),
+        (Planner.interest_importance_allocation, "Распределение по важности умноженной на интерес"),
+        (Planner.points_allocation, "Распределение по важности, умноженной на часы"),
+        (Planner.force_procrastinate_allocation, 'Распределение "принудительная прокрастинация"'),
+    ]
+    print("Виды распределений:")
+    for i in range(len(allocation_types)):
+        print(f"{i + 1}. {allocation_types[i][1]}")
+    print("Напишите номер распределения, которое хотите применить: ", end="")
+    k = input()
+    while not k.isdigit() or not (0 < int(k) <= len(allocation_types)):
+        print(f"Введённое значение должно быть числом от 1 до {len(allocation_types)}")
+        k = input()
+    k = int(k) - 1
+    allocation_types[k][0](planner)
+
+    result_file_name = "planner_result.txt"
+    print()
+    print(planner.failed_tasks_str_rus(), end="")
+    print(planner.calendar_with_schedule_str_rus(), end="")
+    planner.write_result_to_file(result_file_name)
