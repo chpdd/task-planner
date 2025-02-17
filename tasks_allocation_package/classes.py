@@ -248,15 +248,15 @@ class Calendar:
 
     def add_day(self) -> None:
         date = self.last_added_day_date + dt.timedelta(days=1)
-        work_hours = self._manual_date_work_hours.get(date, self.dflt_day_work_hours)
-        self._days.append(Day(date=date, work_hours=work_hours))
+        work_hours = self.manual_date_work_hours.get(date, self.dflt_day_work_hours)
+        self.days.append(Day(date=date, work_hours=work_hours))
 
     def next_fillable_day(self) -> None:
         self._near_fillable_day_index += 1
-        while self._near_fillable_day_index >= len(self.days) or self.near_fillable_day.free_hours == 0:
+        while self._near_fillable_day_index >= len(self.days) or self.near_fillable_day.is_task_filled():
             if self._near_fillable_day_index >= len(self.days):
                 self.add_day()
-            elif self.near_fillable_day.free_hours == 0:
+            elif self.near_fillable_day.is_task_filled():
                 self._near_fillable_day_index += 1
 
     def next_fillable_day_v2(self) -> None:
@@ -279,11 +279,12 @@ class Calendar:
                 free_hours_flag = True
 
     def add_task(self, task: Task, work_hours: int) -> None:
+        day = self.near_fillable_day
         while work_hours:
-            day = self.near_fillable_day
-            work_hours = day.add_task(task, work_hours)
-            if day.is_task_filled():
+            while day.is_task_filled():
                 self.next_fillable_day()
+                day = self.near_fillable_day
+            work_hours = day.add_task(task, work_hours)
 
     def add_task_before_date(self, task: Task, work_hours: int, date: dt.date) -> None:
         day_i = len(self.days) - 1
@@ -441,7 +442,7 @@ class Planner:
             if day.has_tasks():
                 result += f"{(date_to_normal_str(day.date))} есть {day.work_hours} рабочий/их час/ов:\n"
                 for task, work_hours in day.schedule.items():
-                    result += f'Делать "{task.name}" на протяжении {work_hours} часов/а\n'
+                    result += f'Делать задачу "{task.name}" на протяжении {work_hours} часов/а\n'
                 result += "\n"
         return result
 
