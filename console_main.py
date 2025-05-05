@@ -1,4 +1,4 @@
-from tasks_allocation_package.classes import Planner
+from tasks_planner import Planner
 
 import datetime as dt
 import os
@@ -15,9 +15,9 @@ if __name__ == "__main__":
     tasks = Planner.read_tasks_from_file(tasks_file_name, default_task_work_hours)
     days = Planner.read_days_from_file(days_file_name, default_day_work_hours)
     planner = Planner(tasks, days, start_date=start_date, dflt_day_work_hours=default_day_work_hours,
-                         dflt_task_work_hours=default_task_work_hours)
+                      dflt_task_work_hours=default_task_work_hours)
 
-    print(planner.present_tasks_str_rus(), end="")
+    print(planner.tasks_str_table_rus(planner.tasks, "Таблица задач"))
     allocation_types = [
         (Planner.importance_allocation, "Распределение по важности"),
         (Planner.interest_allocation, "Распределение по интересу"),
@@ -38,6 +38,6 @@ if __name__ == "__main__":
 
     result_file_name = "planner_result.txt"
     print()
-    print(planner.failed_tasks_str_rus(), end="")
-    print(planner.calendar_with_schedule_str_rus(), end="")
-    planner.write_result_to_file(result_file_name)
+    print(planner.failed_tasks_str_table_rus())
+    print(planner.calendar_str_tables_rus(), end="")
+    planner.write_result_to_file(result_file_name, allocation_types[k][1])

@@ -71,7 +71,9 @@ def get_instance_by_attr(instance_list, attr_name, attr_value):
     return None
 
 
-def date_to_normal_str(arg_date: dt.date):
+def date_to_normal_str(arg_date: dt.date | None):
+    if not isinstance(arg_date, dt.date):
+        return arg_date
     day = arg_date.day
     month = arg_date.month
     year = arg_date.year

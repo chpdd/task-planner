@@ -1,6 +1,7 @@
 import datetime as dt
+from tabulate import tabulate
 
-from .utils import date_to_normal_str, to_str_instance, read_args_kwargs
+from tasks_planner.utils import date_to_normal_str, to_str_instance, read_args_kwargs
 
 
 class Task:
@@ -84,7 +85,7 @@ class Task:
             return True
         return False
 
-    def present_str_rus(self) -> str:
+    def str_present_rus(self) -> str:
         present_str = f"{self.id}. {self.name},"
         if self.deadline:
             present_str += f" дедлайн {date_to_normal_str(self.deadline)}"
@@ -412,32 +413,52 @@ class Planner:
             manual_days.append(Day(*args, **kwargs))
         return manual_days
 
-    def write_result_to_file(self, file_name: str) -> None:
-        result = self.present_tasks_str_rus() + self.failed_tasks_str_rus() + self.calendar_with_schedule_str_rus()
+    def write_result_to_file(self, file_name: str, allocation_type) -> None:
+        result = "\n".join([self.tasks_str_table_rus(self.tasks, "Таблица задач"),
+                            f"Тип распределения: {allocation_type}",
+                            self.failed_tasks_str_table_rus(),
+                            self.calendar_str_tables_rus()])
 
         with open(file_name, "w", encoding="utf-8") as f:
             f.write(result)
 
-    def present_tasks_str_rus(self) -> str:
+    def tasks_str_table_rus(self, tasks=None, title="Таблица задач") -> str:
+        result = ""
+        if tasks is None:
+            tasks = self.tasks
+        if len(self.tasks):
+            result += f"{title}\n"
+            headers = ["id", "Название", "Дедлайн", "Интерес(от 1 до 10)", "Важность(от 1 до 10)",
+                       "Время выполнения(в часах)"]
+            tasks_lists = []
+            for task in tasks:
+                task_list = [task.id, task.name, date_to_normal_str(task.deadline), task.interest, task.importance,
+                             task.work_hours]
+                tasks_lists.append(task_list)
+            result += tabulate(tasks_lists, headers=headers, tablefmt="pretty") + "\n"
+        return result
+
+    def failed_tasks_str_table_rus(self) -> str:
+        return self.tasks_str_table_rus(tasks=sorted(self.failed_tasks, key=lambda task: task.id),
+                                        title="Невыполненные задачи")
+
+    def tasks_str_rus(self, tasks=None, title="Задачи:") -> str:
+        if tasks is None:
+            tasks = self.tasks
         result = ""
         if len(self.tasks):
-            result += "Все задачи:\n"
+            result += f"{title}\n"
             for task in self.tasks:
-                result += task.present_str_rus() + "\n"
+                result += task.str_present_rus() + "\n"
             result += "\n"
         return result
 
     def failed_tasks_str_rus(self) -> str:
-        result = ""
-        if len(self.failed_tasks):
-            result += "Невыполненные задачи:\n"
-            for task in self.failed_tasks:
-                result += task.present_str_rus() + "\n"
-            result += "\n"
-        return result
+        return self.tasks_str_rus(tasks=sorted(self.failed_tasks, key=lambda task: task.id),
+                                  title="Невыполненные задачи")
 
-    def calendar_with_schedule_str_rus(self) -> str:
-        result = "Календарь с распределёнными задачами:\n"
+    def calendar_str_rus(self, title="Календарь с распределёнными задачами") -> str:
+        result = f"{title}\n"
         for day in self.calendar:
             if day.has_tasks():
                 result += f"{(date_to_normal_str(day.date))} есть {day.work_hours} рабочий/их час/ов:\n"
@@ -446,21 +467,27 @@ class Planner:
                 result += "\n"
         return result
 
-    def print_calendar_with_schedule(self) -> None:
+    def calendar_str_tables_rus(self, title="Календарь с распределёнными задачами") -> str:
+        result = f"{title}\n"
         for day in self.calendar:
             if day.has_tasks():
-                print(f"Day {day.date} with work_hours={day.work_hours} have tasks:")
+                result += f"{(date_to_normal_str(day.date))} есть {day.work_hours} рабочий/их час/ов:\n"
+                tasks_lists = []
                 for task, work_hours in day.schedule.items():
-                    output_attrs = ["name", "deadline", "interest", "importance"]
-                    print(f"{work_hours} work hours at {to_str_instance(task, *output_attrs)}")
-                print()
-        print()
+                    headers = ["id", "Название", "Дедлайн", "Интерес(от 1 до 10)", "Важность(от 1 до 10)",
+                               "Время выполнения задачи(в часах)", "Время работы над задачей(в часах)"]
+                    task_list = [task.id, task.name, date_to_normal_str(task.deadline), task.interest,
+                                 task.importance, task.work_hours, work_hours]
+                    tasks_lists.append(task_list)
+                result += tabulate(tasks_lists, headers=headers, tablefmt="pretty") + "\n"
+                result += "\n"
+        return result
 
-    def add_task(self, task: Task, work_hours: int = None) -> None:
+    def add_task(self, task: Task, work_hours: int | None = None) -> None:
         work_hours = task.work_hours if work_hours is None else work_hours
         self.calendar.add_task(task, work_hours)
 
-    def add_task_before_date(self, task: Task, work_hours: int = None, date: dt.date = None) -> None:
+    def add_task_before_date(self, task: Task, work_hours: int | None = None, date: dt.date | None = None) -> None:
         work_hours = task.work_hours if work_hours is None else work_hours
         date = task.deadline if date is None else date
         self.calendar.add_task_before_date(task, work_hours, date)
@@ -494,12 +521,12 @@ class Planner:
         failed_tasks = set()
 
         for task in tasks:
-            if task.deadline and task.deadline > self.calendar.start_date and self.can_place_task_before_date(
-                    task.work_hours, task.deadline):
+            if (not task.deadline) or (task.deadline > self.calendar.start_date and self.can_place_task_before_date(
+                    task.work_hours, task.deadline)):
                 self.add_task(task, task.work_hours)
             else:
                 failed_tasks.add(task)
-            self.failed_tasks = failed_tasks
+        self.failed_tasks = failed_tasks
 
     def custom_allocation(self, func, rev_bool: bool = False) -> None:
         sorted_tasks = sorted(self.tasks, key=func, reverse=rev_bool)
@@ -528,7 +555,7 @@ class Planner:
                               reverse=True)
         self.allocate_tasks(sorted_tasks)
 
-    def force_procrastinate_allocation(self):
+    def force_procrastinate_allocation(self) -> None:
         imp_srt = sorted(self._deadline_tasks, key=lambda t: (1 / t.importance, t.deadline, 1 / t.interest))
         int_srt = sorted(self._no_deadline_tasks, key=lambda t: (t.interest, t.importance), reverse=True)
         self.clean_calendar()
@@ -543,3 +570,6 @@ class Planner:
         for task in int_srt:
             self.add_task(task)
         self.failed_tasks = failed_tasks
+
+    def procrastinate_allocation(self):
+        self.force_procrastinate_allocation()
