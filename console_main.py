@@ -23,7 +23,7 @@ if __name__ == "__main__":
         (Planner.interest_allocation, "Распределение по интересу"),
         (Planner.interest_importance_allocation, "Распределение по важности умноженной на интерес"),
         (Planner.points_allocation, "Распределение по важности, умноженной на часы"),
-        (Planner.force_procrastinate_allocation, 'Распределение "принудительная прокрастинация"'),
+        (Planner.force_procrastination_allocation, 'Распределение "принудительная прокрастинация"'),
     ]
     print("Виды распределений:")
     for i in range(len(allocation_types)):
