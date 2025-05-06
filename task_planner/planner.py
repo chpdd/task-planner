@@ -1,8 +1,8 @@
 import datetime as dt
 from tabulate import tabulate
 
-from tasks_planner.utils import date_to_normal_str, read_args_kwargs
-from tasks_planner.calendar import Calendar, Task, Day
+from task_planner.utils import date_to_normal_str, read_args_kwargs
+from task_planner.calendar import Calendar, Task, Day
 
 
 class Planner:

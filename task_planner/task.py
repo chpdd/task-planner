@@ -1,6 +1,6 @@
 import datetime as dt
 
-from tasks_planner.utils import date_to_normal_str
+from task_planner.utils import date_to_normal_str
 
 
 class Task:

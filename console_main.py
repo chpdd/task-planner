@@ -1,4 +1,4 @@
-from tasks_planner import Planner
+from task_planner import Planner
 
 import datetime as dt
 import os

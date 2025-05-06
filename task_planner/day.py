@@ -1,6 +1,6 @@
 import datetime as dt
 
-from tasks_planner.task import Task
+from task_planner.task import Task
 
 
 class Day:
