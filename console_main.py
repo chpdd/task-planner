@@ -36,6 +36,7 @@ if __name__ == "__main__":
     k = int(k) - 1
     allocation_types[k][0](planner)
 
+
     result_file_name = "planner_result.txt"
     print()
     print(planner.failed_tasks_str_table_rus())
