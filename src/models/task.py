@@ -15,7 +15,7 @@ class Task(Base):
     __table_args__ = (
         CheckConstraint("1 <= interest AND interest <= 10", name="check_interest_range"),
         CheckConstraint("1 <= importance AND importance <= 10", name="check_importance_range"),
-        CheckConstraint("work_hours >= 1", name="check_work_hours_positive"),
+        CheckConstraint("1 <= work_hours AND work_hours <= 24", name="check_work_hours_positive"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

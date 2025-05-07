@@ -8,4 +8,4 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 @router.get("")
 async def list_tasks(session: db_dep):
-    select()
+    ...

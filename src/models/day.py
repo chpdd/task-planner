@@ -13,12 +13,12 @@ if TYPE_CHECKING:
 class Day(Base):
     __tablename__ = "days"
     __table_args__ = (
-        CheckConstraint("1 <= interest AND interest <= 10", name="check_work_hours_positive"),
+        CheckConstraint("1 <= work_hours AND work_hours <= 24", name="check_work_hours_positive"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     date: Mapped[dt.date] = mapped_column()
-    work_hours: Mapped[int]
+    work_hours: Mapped[int] = mapped_column(default=settings.default_day_work_hours)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     owner: Mapped["User"] = relationship("User", back_populates="days")
