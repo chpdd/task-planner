@@ -14,6 +14,8 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(128), unique=True)
+    hashed_password: Mapped[str] = mapped_column()
+    is_active: Mapped[bool] = mapped_column(default=True)
 
     tasks: Mapped[list["Task"]] = relationship("Task", back_populates="owner")
     days: Mapped[list["Day"]] = relationship("Day", back_populates="owner")

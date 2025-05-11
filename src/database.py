@@ -5,7 +5,7 @@ from typing import Annotated
 
 from src.config import settings
 
-engine = create_async_engine(settings.db_url)
+engine = create_async_engine(settings.db_url, echo=True)
 
 session_factory = async_sessionmaker(engine)
 
@@ -20,4 +20,4 @@ db_dep = Annotated[AsyncSession, Depends(get_db)]
 
 class Base(DeclarativeBase):
     def __str__(self):
-        return f"{self.__name__}(**{self.__dict__.items()})"
+        return f"{self.__name__}({self.__dict__.items()})"

@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -9,14 +10,21 @@ class Settings(BaseSettings):
     DB_PORT: int
     DB_HOST: str
 
-    default_day_work_hours = 4
-    default_task_work_hours = 4
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
+
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    default_day_work_hours: int = 4
+    default_task_work_hours: int = 4
+    default_interest: int = 5
+    default_importance: int = 5
 
     @property
     def db_url(self):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=Path(__file__).parent.parent / ".env")
 
 
 settings = Settings()
