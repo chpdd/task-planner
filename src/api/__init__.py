@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.api_routers import task, day, manual_day, user, auth, planner
+from src.api import task, day, manual_day, user, auth, planner
 
 api_router = APIRouter(prefix="/api")
 

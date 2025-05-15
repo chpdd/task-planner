@@ -3,6 +3,7 @@ import datetime as dt
 from typing import Annotated
 
 from src.config import BaseSchema, settings
+from src.schemas.task import TaskSchema
 
 
 class CreateTaskExecutionSchema(BaseSchema):
@@ -20,3 +21,8 @@ class TaskExecutionSchema(IdTaskExecutionSchema):
 
 class OwnerTaskExecutionSchema(TaskExecutionSchema):
     owner_id: int
+
+
+class TaskAndExecutionSchema(BaseSchema):
+    doing_hours: int
+    task: TaskSchema

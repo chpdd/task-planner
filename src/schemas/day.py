@@ -2,7 +2,7 @@ from pydantic import Field
 import datetime as dt
 
 from src.config import BaseSchema
-from src.schemas.task_execution import CreateTaskExecutionSchema
+from src.schemas.task_execution import CreateTaskExecutionSchema, TaskAndExecutionSchema
 
 
 class CreateDaySchema(BaseSchema):
@@ -24,3 +24,7 @@ class CreateTaskExecutionsDaySchema(CreateDaySchema):
 
 class TaskExecutionsDaySchema(CreateTaskExecutionsDaySchema):
     id: int
+
+
+class TasksDaySchema(DaySchema):
+    task_executions: list[TaskAndExecutionSchema]
