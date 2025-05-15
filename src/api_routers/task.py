@@ -1,11 +1,10 @@
 from fastapi import APIRouter, status, HTTPException
 from sqlalchemy import select
 
+from src.database import db_dep
 from src.models import Task
 from src.schemas.task import TaskSchema, CreateTaskSchema, UpdateTaskSchema
-
-from src.database import db_dep
-from src.security import actual_user_id_dep
+from src.security import actual_user_id_dep, only_admin_dep
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -13,8 +12,15 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 @router.get("")
 async def list_tasks(session: db_dep, user_id: actual_user_id_dep):
     request = select(Task).where(Task.owner_id == user_id)
-    tours = (await session.execute(request)).scalars()
-    return [TaskSchema.model_validate(task) for task in tours]
+    tasks = (await session.execute(request)).scalars()
+    return [TaskSchema.model_validate(task) for task in tasks]
+
+
+@router.get("/all")
+async def list_all_tasks(session: db_dep, user_id: only_admin_dep):
+    request = select(Task)
+    tasks = (await session.execute(request)).scalars()
+    return [TaskSchema.model_validate(task) for task in tasks]
 
 
 @router.get("/{task_id}")
@@ -36,11 +42,11 @@ async def create_task(task_schema: CreateTaskSchema, session: db_dep, user_id: a
 
 
 @router.post("/bulk")
-async def create_tasks(task_schemas: list[CreateTaskSchema], session: db_dep, user_id: actual_user_id_dep):
+async def create_tasks(task_schemas: list[CreateTaskSchema], session: db_dep, user_id: actual_user_id_dep) -> dict:
     tasks = [Task(**task_schema.model_dump(), owner_id=user_id) for task_schema in task_schemas]
     session.add_all(tasks)
     await session.commit()
-    return "Tasks"
+    return {"detail": "Tasks added"}
 
 
 @router.patch("/{task_id}")

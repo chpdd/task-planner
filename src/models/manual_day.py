@@ -7,14 +7,14 @@ from src.database import Base
 from src.config import settings
 
 if TYPE_CHECKING:
-    from src.models import User, TaskExecution
+    from src.models import User
 
 
-class Day(Base):
-    __tablename__ = "days"
+class ManualDay(Base):
+    __tablename__ = "manual_days"
     __table_args__ = (
         CheckConstraint("0 <= work_hours AND work_hours <= 24", name="check_work_hours_range"),
-        UniqueConstraint("date", "owner_id", name="unique_date_for_user_days")
+        UniqueConstraint("date", "owner_id", name="unique_date_for_user_manual_days")
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -22,6 +22,4 @@ class Day(Base):
     work_hours: Mapped[int] = mapped_column(default=settings.default_day_work_hours)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
 
-    owner: Mapped["User"] = relationship("User", back_populates="days")
-    task_executions: Mapped[list["TaskExecution"]] = relationship("TaskExecution", back_populates="day",
-                                                                  cascade="all, delete-orphan", passive_deletes=True)
+    owner: Mapped["User"] = relationship("User", back_populates="manual_days")

@@ -7,7 +7,7 @@ from src.database import Base
 from src.config import settings
 
 if TYPE_CHECKING:
-    from src.models.user import User
+    from src.models import User, TaskExecution
 
 
 class Task(Base):
@@ -15,7 +15,7 @@ class Task(Base):
     __table_args__ = (
         CheckConstraint("1 <= interest AND interest <= 10", name="check_interest_range"),
         CheckConstraint("1 <= importance AND importance <= 10", name="check_importance_range"),
-        CheckConstraint("1 <= work_hours AND work_hours <= 24", name="check_work_hours_positive"),
+        CheckConstraint("1 <= work_hours AND work_hours <= 24", name="check_work_hours_range"),
         UniqueConstraint("name", "owner_id", name="unique_task_name_per_owner")
     )
 
@@ -25,6 +25,8 @@ class Task(Base):
     interest: Mapped[int] = mapped_column(default=settings.default_interest)
     importance: Mapped[int] = mapped_column(default=settings.default_importance)
     work_hours: Mapped[int] = mapped_column(default=settings.default_task_work_hours)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
 
     owner: Mapped["User"] = relationship("User", back_populates="tasks")
+    task_executions: Mapped[list["TaskExecution"]] = relationship("TaskExecution", back_populates="task",
+                                                                  cascade="all, delete-orphan", passive_deletes=True)

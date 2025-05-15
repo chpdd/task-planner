@@ -1,4 +1,4 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from fastapi import Depends
 from typing import Annotated
@@ -15,9 +15,12 @@ async def get_db():
         yield session
 
 
-db_dep = Annotated[AsyncSession, Depends(get_db)]
-
-
 class Base(DeclarativeBase):
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.__dict__})"
+
     def __str__(self):
-        return f"{self.__name__}({self.__dict__.items()})"
+        return self.__repr__()
+
+
+db_dep = Annotated[AsyncSession, Depends(get_db)]

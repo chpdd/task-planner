@@ -1,15 +1,16 @@
 from pydantic import Field
 import datetime as dt
+from typing import Annotated
 
 from src.config import BaseSchema, settings
 
 
 class CreateTaskSchema(BaseSchema):
     name: str = Field(max_length=128)
-    deadline: dt.date | None = Field()
-    interest: int | None = Field(ge=1, le=10)
-    importance: int | None = Field(ge=1, le=10)
-    work_hours: int | None = Field(ge=1)
+    deadline: Annotated[dt.date | None, Field(default=None)]
+    interest: Annotated[int | None, Field(ge=1, le=10, default=None)]
+    importance: Annotated[int | None, Field(ge=1, le=10, default=None)]
+    work_hours: Annotated[int | None, Field(ge=1, default=None)]
 
 
 class UpdateTaskSchema(BaseSchema):
@@ -18,3 +19,7 @@ class UpdateTaskSchema(BaseSchema):
 
 class TaskSchema(CreateTaskSchema):
     id: int
+
+
+class OwnerTaskSchema(TaskSchema):
+    owner_id: int

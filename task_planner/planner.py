@@ -6,13 +6,6 @@ from task_planner.calendar import Calendar, Task, Day
 
 
 class Planner:
-    # allocation_types = {
-    #     "": Planner.importance_allocation,
-    #     "": Planner.interest_allocation,
-    #     "": Planner.interest_importance_allocation,
-    #     "": Planner.points_allocation,
-    #     "": Planner.force_procrastinate_allocation,
-    # }
     def __init__(self, tasks: [Task] = None, manual_days: [Day] = None, start_date: dt.date = dt.date.today(),
                  dflt_day_work_hours: int = 4, dflt_task_work_hours: int = 2) -> None:
         self._tasks = list(filter(lambda task: task.deadline is None or task.deadline > start_date,
@@ -224,6 +217,13 @@ class Planner:
             else:
                 failed_tasks.add(task)
         self.failed_tasks = failed_tasks
+
+    @classmethod
+    def get_allocation_methods(cls):
+        result = [
+            cls.importance_allocation, cls.interest_allocation, cls.interest_importance_allocation,
+            cls.points_allocation, cls.force_procrastination_allocation
+        ]
 
     def custom_allocation(self, func, rev_bool: bool = False) -> None:
         sorted_tasks = sorted(self.tasks, key=func, reverse=rev_bool)

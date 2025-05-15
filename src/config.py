@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     default_day_work_hours: int = 4
-    default_task_work_hours: int = 4
+    default_task_work_hours: int = 2
     default_interest: int = 5
     default_importance: int = 5
 

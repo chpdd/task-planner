@@ -9,3 +9,7 @@ class CreateUserSchema(BaseSchema):
 
 class UserSchema(CreateUserSchema):
     id: int
+
+
+class AdminSchema(UserSchema):
+    is_admin: bool
