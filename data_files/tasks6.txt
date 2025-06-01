@@ -1,6 +1,0 @@
-Подготовиться к пересдаче по числакам, deadline=10.02.2025, interest=3, work_hours=8, importance=10
-Подготовиться к пересдаче урматов, deadline=10.02.2025, interest=4, work_hours=4, importance=9
-Подготовиться к ассессменту, deadline=03.02.2025, interest=10, work_hours=10, importance=10
-Сделать курсовую, deadline=07.02.2025, interest=9, work_hours=10, importance=10
-Изменить резюме, interest=4, work_hours=2, importance=5
-Сделать соцсеть Django REST, interest=8, work_hours=30, importance=5

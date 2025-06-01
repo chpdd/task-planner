@@ -1,7 +1,0 @@
-Готовиться к кр 3 по урматам, deadline=18.12.2024, interest=3, work_hours=2, importance=8
-Написать курсовую, deadline=19.12.2024, interest=6, work_hours=6, importance=7
-Сделать игру, deadline=23.12.2024, interest=8, work_hours=2, importance=7
-Сделать дз по диспрогу, deadline=17.12.2024, interest=3, work_hours=3, importance=7
-Изменить резюме, work_hours=2
-Делать соцсеть Django Rest, work_hours=6, interest=8
-Сделать тестовое задание, deadline=18.12.2024, interest=10, work_hours=4, importance=10

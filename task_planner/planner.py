@@ -248,7 +248,7 @@ class Planner:
 
     def points_allocation(self) -> None:
         sorted_tasks = sorted(self.tasks,
-                              key=lambda task: (task.importance * task.work_hours, task.interest * task.work_hours),
+                              key=lambda task: (task.importance * task.importance * task.work_hours),
                               reverse=True)
         self.allocate_tasks(sorted_tasks)
 

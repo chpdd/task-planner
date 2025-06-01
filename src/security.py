@@ -9,10 +9,8 @@ from typing import Annotated
 from sqlalchemy import select
 
 from src.config import BaseSchema, settings
-from src.models import User
-from src.database import db_dep
 
-oauth2_scheme = fastapi.security.OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+oauth2_scheme = fastapi.security.OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -55,30 +53,3 @@ def create_access_token(data: Payload | dict, expires_delta_minutes: int | None 
 
 def decode_access_token(token):
     return jwt.decode(jwt=token, key=settings.JWT_SECRET_KEY, algorithms=settings.JWT_ALGORITHM)
-
-
-def only_authenticated(token: Annotated[str, Depends(oauth2_scheme)]):
-    return True
-
-
-def get_payload(token: Annotated[str, Depends(oauth2_scheme)]):
-    payload = Payload(**decode_access_token(token))
-    return payload
-
-
-def get_actual_user_id(payload: Annotated[Payload, Depends(get_payload)]):
-    return int(payload.sub)
-
-
-async def only_admin(user_id: Annotated[int, Depends(get_actual_user_id)], session: db_dep):
-    user = await session.get(User, user_id)
-    if user.is_admin:
-        return user_id
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                        detail="Access forbidden. This route is available only for admins.")
-
-
-only_authenticated_dep = Annotated[bool, Depends(only_authenticated)]
-payload_dep = Annotated[Payload, Depends(get_payload)]
-actual_user_id_dep = Annotated[int, Depends(get_actual_user_id)]
-only_admin_dep = Annotated[int, Depends(only_admin)]

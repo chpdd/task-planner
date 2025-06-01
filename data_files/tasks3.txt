@@ -1,6 +1,0 @@
-1, deadline=02.01.2024, interest=3, work_hours=4, importance=7
-2, deadline=02.01.2024, interest=2, work_hours=2, importance=3
-3, deadline=04.01.2024, interest=5, work_hours=2, importance=7
-4, deadline=01.02.2024, interest=8, work_hours=10, importance=3
-5, deadline=05.01.2024, interest=4, work_hours=1, importance=7
-6, deadline=05.01.2024, interest=3, work_hours=2, importance=3

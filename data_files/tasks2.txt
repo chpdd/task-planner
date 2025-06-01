@@ -1,6 +1,0 @@
-Подготовиться к контрольной по дифференциальным уравнениям, deadline=02.01.2024, interest=3, work_hours=4, importance=7
-Подготовить доклад по истории, deadline=02.01.2024, interest=2, work_hours=2, importance=2
-Сделать домашнее задание по физике, deadline=04.01.2024, interest=5, work_hours=2, importance=7
-Изучать классы в Python, deadline=01.02.2024, interest=8, work_hours=10, importance=2
-Сделать домашнее задание по философии, deadline=05.01.2024, interest=4, work_hours=1, importance=7
-Подготовить доклад по психологии, deadline=05.01.2024, interest=3, work_hours=2, importance=2
