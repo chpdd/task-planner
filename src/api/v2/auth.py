@@ -14,14 +14,14 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/register")
 async def register_user(auth_schema: auth.AuthSchema, session: db_dep):
-    user = await user_crud.schema_get_by_name(auth_schema.name)
-    if user is None:
+    user_schema = await user_crud.schema_get_by_name(auth_schema.name)
+    if user_schema is None:
         raise HTTPException(detail="This username is already taken", status_code=status.HTTP_409_CONFLICT)
     hashed_password = security.hash_password(auth_schema.password)
     user = User(hashed_password=hashed_password, name=auth_schema.name)
     user_crud.create(session, user)
     await session.commit()
-    return security.create_access_token(security.Payload(sub=str(int(user.id))))
+    return security.create_access_token(security.Payload(sub=str(int(user_schema.id))))
 
 
 @router.post("/login")

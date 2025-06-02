@@ -21,8 +21,8 @@ class Header(BaseSchema):
 
 
 class Payload(BaseSchema):
-    sub: str | None = Field(default=None)
-    exp: dt.datetime | None = Field(default=None)
+    sub: Annotated[str | None, Field(default=None)]
+    exp: Annotated[dt.datetime | None, Field(default=None)]
 
 
 def hash_password(password):

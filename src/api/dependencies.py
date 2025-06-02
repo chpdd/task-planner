@@ -12,7 +12,7 @@ db_dep = Annotated[AsyncSession, Depends(get_db)]
 
 def get_payload(token: Annotated[str, Depends(oauth2_scheme)]):
     payload = Payload(**decode_access_token(token))
-    if payload.sub > dt.datetime.now():
+    if payload.exp > dt.datetime.now(dt.timezone.utc):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access token has ended")
     return payload
 

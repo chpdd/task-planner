@@ -1,9 +1,12 @@
 from src.config import BaseSchema
 
 
-class FailedTaskSchema(BaseSchema):
-    id: int
+class CreateFailedTaskSchema(BaseSchema):
     task_id: int
+
+
+class FailedTaskSchema(CreateFailedTaskSchema):
+    id: int
 
 
 class OwnerFailedTaskSchema(FailedTaskSchema):
