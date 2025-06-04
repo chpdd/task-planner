@@ -7,4 +7,4 @@ class DayCRUD(SchemaCRUD[Day, CreateDaySchema, DaySchema]):
     pass
 
 
-day_crud = DayCRUD(Day, CreateDaySchema, DaySchema)
+day_crud: DayCRUD = DayCRUD(Day, CreateDaySchema, DaySchema)

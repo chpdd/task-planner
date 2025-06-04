@@ -23,7 +23,7 @@ async def register_user(auth_schema: AuthSchema, session: db_dep):
     session.add(user)
     await session.commit()
     await session.refresh(user)
-    return security.create_access_token(security.Payload(sub=str(user.id)))
+    return security.create_access_token(security.FullPayload(sub=str(user.id)))
 
 
 @router.post("/login")
@@ -32,4 +32,4 @@ async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     user = (await session.execute(request)).scalar_one_or_none()
     if user is None or not security.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this name and password not found")
-    return security.create_access_token(security.Payload(sub=str(user.id)))
+    return security.create_access_token(security.FullPayload(sub=str(user.id)))

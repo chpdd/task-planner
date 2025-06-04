@@ -1,29 +1,28 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel
+from sqlalchemy import select, delete
 from fastapi import HTTPException, status
 
 from typing import TypeVar, Generic, Iterable
 
 from src.database import Base
-
-ORMModel = TypeVar("ORMModel", bound=Base)
-RetrieveSchema = TypeVar("RetrieveSchema", bound=BaseModel)
-CreateSchema = TypeVar("CreateSchema", bound=BaseModel)
+from src.config import BaseSchema
 
 
-class BaseCRUD(Generic[ORMModel]):
-    def __init__(self, orm_model: ORMModel):
+class BaseCRUD[ORMModel: Base]:
+    def __init__(self, orm_model: type[ORMModel]):
         self.orm_model = orm_model
         self.model_name = orm_model.__name__
 
     async def get(self, session: AsyncSession, obj_id: int) -> ORMModel | None:
-        return await session.get(self.orm_model, obj_id)
+        obj = await session.get(self.orm_model, obj_id)
+        self.is_none_check(obj)
+        return obj
 
     async def get_by_name(self, session: AsyncSession, name: str) -> ORMModel | None:
         self.model_has_column_check("name")
-        obj_stmt = select(ORMModel).where(ORMModel.name == name)
+        obj_stmt = select(self.orm_model).where(self.orm_model.name == name)
         obj = await session.scalar(obj_stmt)
+        self.is_none_check(obj)
         return obj
 
     async def list(self, session: AsyncSession) -> Iterable[ORMModel] | None:
@@ -34,12 +33,24 @@ class BaseCRUD(Generic[ORMModel]):
         await session.flush(obj)
         await session.refresh(obj)
 
-    async def update(self, session: AsyncSession, obj: ORMModel, **kwargs) -> None:
+    async def update(self, session: AsyncSession, obj: ORMModel, **kwargs) -> ORMModel:
         for key, val in kwargs.items():
             setattr(obj, key, val)
+        await session.flush(obj)
+        await session.refresh(obj)
+        return obj
+
+    async def update_by_id(self, session: AsyncSession, obj_id: int, **kwargs) -> ORMModel:
+        obj = await self.get(session, obj_id)
+        return await self.update(session, obj, **kwargs)
 
     async def delete(self, session: AsyncSession, obj: ORMModel) -> None:
         await session.delete(obj)
+
+    async def owner_all_delete(self, session: AsyncSession, owner_id: int) -> None:
+        self.model_has_column_check("owner_id")
+        stmt = delete(self.orm_model).where(self.orm_model.owner_id == owner_id)
+        await session.execute(stmt)
 
     def model_has_column_check(self, column_name: str):
         if column_name not in self.orm_model.__mapper__.c:
@@ -51,32 +62,30 @@ class BaseCRUD(Generic[ORMModel]):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{self.model_name} not found")
 
 
-class SchemaCRUD(Generic[ORMModel, CreateSchema, RetrieveSchema], BaseCRUD[ORMModel]):
-    def __init__(self, orm_model: ORMModel, create_schema: CreateSchema, retrieve_schema: RetrieveSchema):
+class SchemaCRUD[ORMModel: Base, CreateSchema: BaseSchema, RetrieveSchema: BaseSchema](BaseCRUD):
+    def __init__(self, orm_model: type[ORMModel], create_schema: type[CreateSchema],
+                 retrieve_schema: type[RetrieveSchema]):
         self.retrieve_schema = retrieve_schema
         self.create_schema = create_schema
         super().__init__(orm_model)
 
     async def schema_get(self, session: AsyncSession, obj_id: int) -> RetrieveSchema | None:
         obj = await self.get(session, obj_id)
-        self.is_none_check(obj)
         return self.retrieve_schema.model_validate(obj)
 
     async def schema_get_by_name(self, session: AsyncSession, name: str) -> RetrieveSchema:
-        self.model_has_column_check("name")
-        obj_stmt = select(ORMModel).where(ORMModel.name == name)
-        obj = await session.scalar(obj_stmt)
+        obj = await self.get_by_name(session, name)
         return self.retrieve_schema.model_validate(obj)
 
     async def schema_owner_get(self, session: AsyncSession, obj_id: int, owner_id: int) -> RetrieveSchema | None:
-        self.model_has_column("owner_id")
+        self.model_has_column_check("owner_id")
         obj = await self.get(session, obj_id)
-        if obj is None or obj.owner_id != owner_id:
+        if obj.owner_id != owner_id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{self.model_name} not found")
         return self.retrieve_schema.model_validate(obj)
 
     async def schema_list(self, session: AsyncSession) -> list[RetrieveSchema] | None:
-        return [self.retrieve_schema.model_validate(obj) for obj in await self.get(session)]
+        return [self.retrieve_schema.model_validate(obj) for obj in await self.list(session)]
 
     async def schema_owner_list(self, session: AsyncSession, owner_id: int) -> list[RetrieveSchema] | None:
         self.model_has_column_check("owner_id")
@@ -86,16 +95,22 @@ class SchemaCRUD(Generic[ORMModel, CreateSchema, RetrieveSchema], BaseCRUD[ORMMo
 
     async def schema_create(self, session: AsyncSession, obj_schema: CreateSchema) -> RetrieveSchema:
         obj = self.orm_model(**obj_schema.model_dump())
-        self.create(session, obj)
+        await self.create(session, obj)
         return self.retrieve_schema.model_validate(obj)
 
     async def schema_owner_create(self, session: AsyncSession, obj_schema: CreateSchema,
                                   owner_id: int) -> RetrieveSchema:
         obj = self.orm_model(**obj_schema.model_dump(), owner_id=owner_id)
-        self.create(session, obj)
+        await self.create(session, obj)
         return self.retrieve_schema.model_validate(obj)
 
-    def schema_update(self, session: AsyncSession, obj: ORMModel, update_obj_schema: CreateSchema) -> RetrieveSchema:
+    async def schema_update(self, session: AsyncSession, obj: ORMModel,
+                            update_obj_schema: CreateSchema) -> RetrieveSchema:
         for key, val in update_obj_schema.model_dump(exclude_unset=True).items():
             setattr(obj, key, val)
+        return self.retrieve_schema.model_validate(obj)
+
+    async def schema_update_by_id(self, session: AsyncSession, obj_id,
+                                  update_obj_schema: CreateSchema) -> RetrieveSchema:
+        obj = await self.update_by_id(session, obj_id, **update_obj_schema.model_dump(exclude_unset=True))
         return self.retrieve_schema.model_validate(obj)

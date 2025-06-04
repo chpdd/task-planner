@@ -7,4 +7,4 @@ class FailedTaskCRUD(SchemaCRUD[FailedTask, CreateFailedTaskSchema, FailedTaskSc
     pass
 
 
-failed_task_crud = FailedTaskCRUD(FailedTask, CreateFailedTaskSchema, FailedTaskSchema)
+failed_task_crud: FailedTaskCRUD = FailedTaskCRUD(FailedTask, CreateFailedTaskSchema, FailedTaskSchema)

@@ -25,9 +25,9 @@ async def get_task(task_id: int, session: db_dep, user_id: user_id_dep) -> schem
     return await task_crud.schema_owner_get(session, task_id, user_id)
 
 
-@router.put("/patch")
+@router.patch("/{task_id}")
 async def update_task(task_schema: schemas.CreateTaskSchema, task_id: int, session: db_dep,
                       user_id: user_id_dep) -> schemas.TaskSchema:
-    task_schema = await task_crud.schema_update(session, task_id, task_schema)
+    task_schema = await task_crud.schema_update_by_id(session, task_id, task_schema)
     session.commit()
     return task_schema

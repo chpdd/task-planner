@@ -7,4 +7,4 @@ class TaskCRUD(SchemaCRUD[Task, CreateTaskSchema, TaskSchema]):
     pass
 
 
-task_crud = TaskCRUD(Task, CreateTaskSchema, TaskSchema)
+task_crud: TaskCRUD = TaskCRUD(Task, CreateTaskSchema, TaskSchema)

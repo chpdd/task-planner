@@ -7,4 +7,4 @@ class TaskExecutionCRUD(SchemaCRUD[TaskExecution, CreateTaskExecutionSchema, Tas
     pass
 
 
-task_execution_crud = TaskExecutionCRUD(TaskExecution, CreateTaskExecutionSchema, TaskExecutionSchema)
+task_execution_crud: TaskExecutionCRUD = TaskExecutionCRUD(TaskExecution, CreateTaskExecutionSchema, TaskExecutionSchema)

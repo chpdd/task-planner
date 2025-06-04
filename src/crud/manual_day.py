@@ -7,4 +7,5 @@ class ManualDayCRUD(SchemaCRUD[ManualDay, CreateManualDaySchema, ManualDaySchema
     pass
 
 
-manual_day_crud = ManualDayCRUD(ManualDay, CreateManualDaySchema, ManualDaySchema)
+manual_day_crud: ManualDayCRUD = ManualDayCRUD(ManualDay, CreateManualDaySchema, ManualDaySchema)
+

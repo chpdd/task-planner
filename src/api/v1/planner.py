@@ -16,7 +16,7 @@ from src.schemas.manual_day import ManualDaySchema
 from src.schemas.task_execution import CreateTaskExecutionSchema
 from src.schemas.failed_task import FailedTaskSchema
 
-router = APIRouter(prefix="/planner", tags=["Planner"])
+router = APIRouter(prefix="/planner", tags=["Planners"])
 
 
 class AllocationMethod(Enum):

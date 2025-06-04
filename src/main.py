@@ -17,7 +17,7 @@ async def execution_time(request: Request, call_next):
 
     duration_datetime = dt.datetime.now() - start_datetime
     response.headers["execution_time"] = str(duration_datetime)
-    print(f"\tExecution time in seconds:{duration_datetime.microseconds / 1_000_000}")
+    print(f"\nExecution time in seconds:{duration_datetime.microseconds / 1_000_000}")
 
     return response
 

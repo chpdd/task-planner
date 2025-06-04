@@ -11,4 +11,4 @@ class UserCRUD(SchemaCRUD[User, CreateUserSchema, UserSchema]):
     pass
 
 
-user_crud = UserCRUD(User, CreateUserSchema, UserSchema)
+user_crud: UserCRUD = UserCRUD(User, CreateUserSchema, UserSchema)
