@@ -106,8 +106,7 @@ class SchemaCRUD[ORMModel: Base, CreateSchema: BaseSchema, RetrieveSchema: BaseS
 
     async def schema_update(self, session: AsyncSession, obj: ORMModel,
                             update_obj_schema: CreateSchema) -> RetrieveSchema:
-        for key, val in update_obj_schema.model_dump(exclude_unset=True).items():
-            setattr(obj, key, val)
+        obj = await self.update(session, **update_obj_schema.model_dump(exclude_unset=True))
         return self.retrieve_schema.model_validate(obj)
 
     async def schema_update_by_id(self, session: AsyncSession, obj_id,
