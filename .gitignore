@@ -1,0 +1,7 @@
+logs
+
+elasticsearch/data
+
+fluentd/fluentd_claim.conf
+
+postgres/data

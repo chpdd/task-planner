@@ -1,0 +1,88 @@
+services:
+  web:
+    container_name: web
+    build:
+      context: web
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    command: python start.py
+    volumes:
+      - ./web:/web
+    env_file:
+      - web/.env
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 0.0.0.0:24224
+        fluentd-sub-second-precision: "true"
+        tag: web.logs
+    depends_on:
+      fluentd:
+        condition: service_healthy
+#      postgres:
+#        condition: service_healthy
+
+  postgres:
+    image: postgres:16.3
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 12344321
+      POSTGRES_DB: task_planner_db
+      PGDATA: /vr/lib/postgresql/data/pgdata
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres/scripts:/var/lib/postgresql/scripts
+
+  elasticsearch:
+      image: docker.elastic.co/elasticsearch/elasticsearch:8.17.1
+      container_name: elasticsearch
+      hostname: elasticsearch
+      environment:
+        - discovery.type=single-node
+        - xpack.security.enabled=false
+        - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      ports:
+        - "9200:9200"
+      volumes:
+        - ./elasticsearch/data:/usr/share/elasticsearch/data
+      healthcheck:
+        # Check whether service is ready
+        test: [ "CMD", "curl", "-f", "http://localhost:9200/_cluster/health" ]
+        interval: 10s
+        retries: 5
+        timeout: 5s
+
+  kibana:
+      image: docker.elastic.co/kibana/kibana:8.17.1
+      container_name: kibana
+      ports:
+        - "5601:5601"
+      environment:
+        - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      depends_on:
+        elasticsearch:
+          condition: service_healthy
+
+  fluentd:
+    container_name: fluentd
+    build:
+      context: fluentd
+      dockerfile: Dockerfile
+    volumes:
+      - ./fluentd/fluentd.conf:/fluentd/etc/fluent.conf
+      - ./logs:/app/logs  # Fluentd будет читать логи
+    ports:
+      - "24224:24224"  # TCP input
+      - "24224:24224/udp"  # UDP input
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 24224"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
