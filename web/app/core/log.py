@@ -5,7 +5,7 @@ from sys import stderr
 
 class TZFormatter(logging.Formatter):
     tz = time.strftime("%z")
-    tz = f"{tz[:-2]}:{tz[-2:]}"
+    # tz = f"{tz[:-2]}:{tz[-2:]}"
 
     def format(self, record):
         record.timezone = self.tz
