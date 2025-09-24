@@ -13,7 +13,7 @@ async def list_manual_days(session: db_dep, user_id: user_id_dep) -> list[schema
 
 
 @router.post("")
-async def create_manual_day(manual_day_schema: schemas.ManualDaySchema, session: db_dep,
+async def create_manual_day(manual_day_schema: schemas.CreateManualDaySchema, session: db_dep,
                             user_id: user_id_dep) -> schemas.ManualDaySchema:
     manual_day_schema = await manual_day_crud.schema_owner_create(session, manual_day_schema, user_id)
     await session.commit()

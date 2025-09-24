@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, HTTPException
 from sqlalchemy import select
 
 from app.api.dependencies import user_id_dep, admin_id_dep, db_dep
-from app.config import BaseSchema
+from app.core.config import BaseSchema
 from app.models import Day
 from app.schemas.day import DaySchema
 

@@ -4,8 +4,8 @@ from fastapi import HTTPException, status
 
 from typing import TypeVar, Generic, Iterable
 
-from app.database import Base
-from app.config import BaseSchema
+from app.core.database import Base
+from app.core.config import BaseSchema
 
 
 class BaseCRUD[ORMModel: Base]:
@@ -30,13 +30,13 @@ class BaseCRUD[ORMModel: Base]:
 
     async def create(self, session: AsyncSession, obj: ORMModel) -> None:
         session.add(obj)
-        await session.flush(obj)
+        await session.flush()
         await session.refresh(obj)
 
     async def update(self, session: AsyncSession, obj: ORMModel, **kwargs) -> ORMModel:
         for key, val in kwargs.items():
             setattr(obj, key, val)
-        await session.flush(obj)
+        await session.flush()
         await session.refresh(obj)
         return obj
 

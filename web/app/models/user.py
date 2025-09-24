@@ -2,7 +2,7 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import CheckConstraint, String
 from typing import TYPE_CHECKING
 
-from app.database import Base
+from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models import Task, Day, TaskExecution, FailedTask, ManualDay

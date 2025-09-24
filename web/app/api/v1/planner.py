@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 import task_planner as tp
 
 from app.api.dependencies import user_id_dep, admin_id_dep, db_dep
-from app.config import settings
+from app.core.config import settings
 from app.models import Task, FailedTask, TaskExecution, Day, ManualDay
 from app.schemas.day import TaskExecutionsDaySchema, CreateTaskExecutionsDaySchema, TasksDaySchema
 from app.schemas.task import OwnerTaskSchema

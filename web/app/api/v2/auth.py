@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 
-from app import security
+from app.core import security
 from app.api.dependencies import user_id_dep, admin_id_dep, db_dep
 
 from app.models import User

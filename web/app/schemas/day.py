@@ -1,7 +1,7 @@
 from pydantic import Field
 import datetime as dt
 
-from app.config import BaseSchema
+from app.core.config import BaseSchema
 from app.schemas.task_execution import CreateTaskExecutionSchema, TaskAndExecutionSchema
 
 

@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from app.config import BaseSchema
+from app.core.config import BaseSchema
 
 
 class CreateUserSchema(BaseSchema):

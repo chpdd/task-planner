@@ -1,26 +1,12 @@
-import logging
 import time
+import logging
 
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware import Middleware
 from fastapi import Request
 from multipart.multipart import parse_options_header
-from starlette.middleware.base import BaseHTTPMiddleware
-from uvicorn.config import LOGGING_CONFIG
 
-date_format = '%Y-%m-%d %H:%M:%S'
-tz = time.strftime('%z')
-log_format = '%(asctime)s.%(msecs)03d ' + tz + ' %(levelname)s - %(name)s (%(filename)s:%(lineno)d): %(message)s'
-
-logging.basicConfig(level=logging.DEBUG, datefmt=date_format, format=log_format)
-logging.getLogger('uvicorn').setLevel(logging.DEBUG)
-logging.getLogger('sqlalchemy.engine').setLevel('INFO')
-
-log_config = LOGGING_CONFIG.copy()
-log_config["formatters"]["default"]["fmt"] = log_format
-log_config["formatters"]["default"]["datefmt"] = date_format
-log_config["formatters"]["access"]["fmt"] = log_format
-log_config["formatters"]["access"]["datefmt"] = date_format
-
-logger = logging.getLogger('fastapi')
+logger = logging.getLogger("fastapi")
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -49,3 +35,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             f'{request_body} ({round(time.time() - time_start, 3)}s)'
         )
         return response
+
+
+middleware = [Middleware(LoggingMiddleware)]

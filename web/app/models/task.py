@@ -3,8 +3,8 @@ from sqlalchemy import CheckConstraint, String, ForeignKey, UniqueConstraint
 from typing import TYPE_CHECKING
 import datetime as dt
 
-from app.database import Base
-from app.config import settings
+from app.core.database import Base
+from app.core.config import settings
 
 if TYPE_CHECKING:
     from app.models import User, TaskExecution

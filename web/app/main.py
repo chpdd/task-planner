@@ -1,11 +1,7 @@
-import uvicorn
-from fastapi import FastAPI, Request, Response
-from starlette.middleware import Middleware
+from fastapi import FastAPI
 
 from app.api import api_router
-from app.logging_middleware import LoggingMiddleware, log_config
-
-middleware = [Middleware(LoggingMiddleware)]
+from app.core.middleware import middleware
 
 app = FastAPI(middleware=middleware)
 app.include_router(api_router)

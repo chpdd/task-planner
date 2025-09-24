@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 import task_planner as tp
 
 from app.api.dependencies import user_id_dep, admin_id_dep, db_dep
-from app.config import settings
+from app.core.config import settings
 
 from app import schemas
 from app.models import Task, FailedTask, TaskExecution, Day, ManualDay
@@ -69,7 +69,6 @@ async def list_failed_tasks(session: db_dep, user_id: user_id_dep) -> list[schem
 @router.post("/allocate")
 async def allocate_tasks(allocation_method: AllocationMethod, session: db_dep, user_id: user_id_dep,
                          start_date: dt.date = dt.date.today()):
-    # to display the parameter selection
     allocation_method = name_to_method.get(allocation_method, None)
 
     await failed_task_crud.owner_all_delete(session, user_id)
@@ -83,7 +82,7 @@ async def allocate_tasks(allocation_method: AllocationMethod, session: db_dep, u
         task.db_id = task_schema.id
         tasks.append(task)
 
-    manual_days_schemas = manual_day_crud.schema_owner_list(session, user_id)
+    manual_days_schemas = await manual_day_crud.schema_owner_list(session, user_id)
     manual_days = [tp.Day(**manual_day_schema.model_dump(exclude={"id"})) for manual_day_schema in manual_days_schemas]
 
     planner = tp.Planner(tasks=tasks, manual_days=manual_days, start_date=start_date,

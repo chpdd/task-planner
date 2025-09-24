@@ -3,7 +3,7 @@ from sqlalchemy.orm import DeclarativeBase
 from fastapi import Depends
 from typing import Annotated
 
-from app.config import settings
+from app.core.config import settings
 
 engine = create_async_engine(settings.db_url, echo=False)
 

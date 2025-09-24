@@ -8,7 +8,7 @@ from fastapi import Depends, HTTPException, status
 from typing import Annotated
 from sqlalchemy import select
 
-from app.config import BaseSchema, settings
+from app.core.config import BaseSchema, settings
 
 oauth2_scheme = fastapi.security.OAuth2PasswordBearer(tokenUrl="/api/v2/auth/login")
 
@@ -22,9 +22,6 @@ class Header(BaseSchema):
 
 class FullPayload(BaseSchema):
     sub: Annotated[str | None, Field(default=None)]
-
-
-class FullPayload(FullPayload):
     exp: Annotated[int | None, Field(default=None)]
 
 

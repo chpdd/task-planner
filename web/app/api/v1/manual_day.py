@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.api.dependencies import user_id_dep, admin_id_dep, db_dep
 from app.models import ManualDay
 from app.schemas.manual_day import ManualDaySchema, CreateManualDaySchema, OwnerManualDaySchema
-from app.config import BaseSchema
+from app.core.config import BaseSchema
 
 router = APIRouter(prefix="/manual_days", tags=["ManualDays"])
 

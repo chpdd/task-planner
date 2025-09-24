@@ -1,4 +1,4 @@
-from app.config import BaseSchema
+from app.core.config import BaseSchema
 
 
 class CreateFailedTaskSchema(BaseSchema):
