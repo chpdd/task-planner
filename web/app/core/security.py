@@ -33,7 +33,7 @@ def verify_password(password, hashed_password):
     return pwd_context.verify(password, hashed_password)
 
 
-def create_access_token(data: FullPayload | dict, expires_delta_minutes: int = 30):
+def create_access_token(data: FullPayload | dict, expires_delta_minutes: int = 120):
     match data:
         case FullPayload(sub=sub) | {"sub": sub}:
             exp = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(minutes=expires_delta_minutes)).timestamp()
