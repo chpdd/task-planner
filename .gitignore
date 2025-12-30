@@ -1,4 +1,7 @@
 .gitignore
 .env
+.idea
 console_app/data_files
 TODO
+postgres
+elasticsearch
