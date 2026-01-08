@@ -4,12 +4,11 @@ from enum import Enum
 from fastapi import Depends, APIRouter
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import task_planner as tp
 
 
-from app.core.dependencies import get_db, get_user_id, get_admin_id
+from app.core.dependencies import db_dep, get_user_id
 
 from app.core.config import settings
 from app.models import Task, FailedTask, TaskExecution, Day, ManualDay
@@ -40,7 +39,7 @@ name_to_method = {
 
 
 @router.get("/calendar")
-async def get_calendar(session: AsyncSession = Depends(get_db), user_id: int = Depends(get_user_id), start_date: dt.date = dt.date.today()
+async def get_calendar(session: db_dep, user_id: int = Depends(get_user_id), start_date: dt.date = dt.date.today()
                        ) -> list[TaskExecutionsDaySchema]:
     days_stmt = select(Day).options(selectinload(Day.task_executions)).where(Day.owner_id == user_id,
                                                                              Day.date >= start_date)
@@ -53,7 +52,7 @@ async def get_calendar(session: AsyncSession = Depends(get_db), user_id: int = D
 
 
 @router.get("/calendar_with_tasks")
-async def get_calendar_with_tasks(session: AsyncSession = Depends(get_db), user_id: int = Depends(get_user_id), start_date: dt.date = dt.date.today()
+async def get_calendar_with_tasks(session: db_dep, user_id: int = Depends(get_user_id), start_date: dt.date = dt.date.today()
                                   ) -> list[TasksDaySchema]:
     days_stmt = select(Day).options(selectinload(Day.task_executions).selectinload(TaskExecution.task)).where(
         Day.owner_id == user_id,
@@ -67,14 +66,14 @@ async def get_calendar_with_tasks(session: AsyncSession = Depends(get_db), user_
 
 
 @router.get("/failed_tasks")
-async def list_failed_tasks(session: AsyncSession = Depends(get_db), user_id: int = Depends(get_user_id)) -> list[FailedTaskSchema]:
+async def list_failed_tasks(session: db_dep, user_id: int = Depends(get_user_id)) -> list[FailedTaskSchema]:
     stmt = select(FailedTask).where(FailedTask.owner_id == user_id)
     failed_tasks_iter = await session.scalars(stmt)
     return [FailedTaskSchema.model_validate(failed_task) for failed_task in failed_tasks_iter]
 
 
 @router.post("/allocate")
-async def allocate_tasks(allocation_method: AllocationMethod, session: AsyncSession = Depends(get_db), user_id: int = Depends(get_user_id),
+async def allocate_tasks(allocation_method: AllocationMethod, session: db_dep, user_id: int = Depends(get_user_id),
                          start_date: dt.date = dt.date.today()):
     # to display the parameter selection
     allocation_method = name_to_method.get(allocation_method, None)

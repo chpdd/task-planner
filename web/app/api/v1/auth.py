@@ -1,12 +1,11 @@
 from typing import Annotated
 
-from fastapi import Depends, APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import security
-from app.core.dependencies import get_db, get_user_id, get_admin_id
+from app.core.dependencies import db_dep
 
 from app.models import User
 from app.schemas.auth import AuthSchema
@@ -15,7 +14,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/register")
-async def register_user(auth_schema: AuthSchema, session: AsyncSession = Depends(get_db)):
+async def register_user(auth_schema: AuthSchema, session: db_dep):
     request = select(User).where(User.name == auth_schema.name)
     user = (await session.execute(request)).scalar_one_or_none()
     if user:
@@ -29,7 +28,7 @@ async def register_user(auth_schema: AuthSchema, session: AsyncSession = Depends
 
 
 @router.post("/login")
-async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: AsyncSession = Depends(get_db)):
+async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: db_dep):
     request = select(User).where(User.name == form_data.username)
     user = (await session.execute(request)).scalar_one_or_none()
     if user is None or not security.verify_password(form_data.password, user.hashed_password):

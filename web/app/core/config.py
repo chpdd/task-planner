@@ -4,6 +4,8 @@ from pathlib import Path
 
 
 class Settings(BaseSettings):
+    ENV_TYPE: str
+
     DB_NAME: str
     DB_USER: str
     DB_PASS: str
@@ -24,7 +26,7 @@ class Settings(BaseSettings):
     def db_url(self):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    model_config = SettingsConfigDict(env_file=Path(__file__).parent.parent / ".env")
+    model_config = SettingsConfigDict(env_file=Path(__file__).parent.parent.parent / ".env")
 
 
 settings = Settings()

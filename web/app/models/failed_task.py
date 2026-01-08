@@ -1,13 +1,11 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import CheckConstraint, String, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import ForeignKey, Index
 from typing import TYPE_CHECKING
-import datetime as dt
 
 from app.core.database import Base
-from app.core.config import settings
 
 if TYPE_CHECKING:
-    from app.models import User, Task, Calendar
+    from app.models import User, Task
 
 
 class FailedTask(Base):

@@ -2,9 +2,8 @@ import datetime as dt
 
 from fastapi import Depends, APIRouter, status, HTTPException
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_db, get_user_id, get_admin_id
+from app.core.dependencies import db_dep, get_user_id, get_admin_id
 
 from app.core.config import BaseSchema
 from app.models import Day
@@ -18,7 +17,7 @@ class DateSchema(BaseSchema):
 
 
 @router.get("/{owner_id}")
-async def list_user_days(owner_id: int, session: AsyncSession = Depends(get_db),
+async def list_user_days(owner_id: int, session: db_dep,
                          user_id: int = Depends(get_admin_id)) -> list[
     DaySchema]:
     request = select(Day).where(Day.owner_id == owner_id)
@@ -27,7 +26,7 @@ async def list_user_days(owner_id: int, session: AsyncSession = Depends(get_db),
 
 
 @router.get("/all")
-async def list_all_days(session: AsyncSession = Depends(get_db), user_id: int = Depends(get_admin_id)) -> list[
+async def list_all_days(session: db_dep, user_id: int = Depends(get_admin_id)) -> list[
     DaySchema]:
     request = select(Day)
     days = (await session.execute(request)).scalars()
@@ -35,7 +34,7 @@ async def list_all_days(session: AsyncSession = Depends(get_db), user_id: int = 
 
 
 @router.get("/{day_id}")
-async def retrieve_user_day(day_id: int, session: AsyncSession = Depends(get_db),
+async def retrieve_user_day(day_id: int, session: db_dep,
                             user_id: int = Depends(get_admin_id)) -> DaySchema:
     day = await session.get(Day, day_id)
     if day is None or day.owner_id != user_id:
@@ -44,7 +43,7 @@ async def retrieve_user_day(day_id: int, session: AsyncSession = Depends(get_db)
 
 
 @router.get("/by_date")
-async def retrieve_user_day_by_date(day_id: int, date_schema: DateSchema, session: AsyncSession = Depends(get_db),
+async def retrieve_user_day_by_date(day_id: int, date_schema: DateSchema, session: db_dep,
                                     user_id: int = Depends(get_user_id)) -> DaySchema:
     day_stmt = select(Day).where(Day.date == date_schema.date, Day.owner_id == user_id)
     day = (await session.execute(day_stmt)).scalar_one_or_none()

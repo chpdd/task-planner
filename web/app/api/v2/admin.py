@@ -3,10 +3,10 @@ from datetime import datetime
 
 from fastapi import Depends, APIRouter, BackgroundTasks, HTTPException, status
 from sqlalchemy import text, quoted_name
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import engine
-from app.core.dependencies import get_db, get_admin_id, get_autocommit_conn
+from app.core.dependencies import db_dep, admin_id_dep, get_autocommit_conn
 
 from app.schemas.admin import TableData, TableDataExecution, IndexData, IndexDataExecution
 
@@ -16,27 +16,27 @@ background_tasks_logger = logging.getLogger('background_tasks')
 
 
 @router.get('/tables')
-async def get_tables(admin_id: int = Depends(get_admin_id), db: AsyncSession = Depends(get_db)):
-    sql_query = f"""
+async def get_tables(session: db_dep, admin_id: admin_id_dep):
+    sql_query = """
         SELECT table_schema, table_name
         FROM information_schema.tables
         WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
         ORDER BY table_schema, table_name;
 """
-    result = await db.execute(text(sql_query))
+    result = await session.execute(text(sql_query))
     rows = result.mappings().all()
     return [{"schema_name": row["table_schema"], "table_name": row["table_name"]} for row in rows]
 
 
 @router.get("/indexes")
-async def get_indexes(admin_id: int = Depends(get_admin_id), db: AsyncSession = Depends(get_db)):
+async def get_indexes(session: db_dep, admin_id: admin_id_dep):
     sql_query = """
         SELECT schemaname, tablename, indexname, indexdef
         FROM pg_indexes
         WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
         ORDER BY schemaname, tablename, indexname;
     """
-    result = await db.execute(text(sql_query))
+    result = await session.execute(text(sql_query))
     rows = result.mappings().all()
     return [
         {
@@ -50,9 +50,8 @@ async def get_indexes(admin_id: int = Depends(get_admin_id), db: AsyncSession = 
 
 
 @router.post('/indexes/exists')
-async def indexes_are_exists(indexes_data: list[IndexData], admin_id: int = Depends(get_admin_id),
-                             db: AsyncSession = Depends(get_db)) -> list[IndexData]:
-    sql_indexes_in_db = f"""
+async def indexes_are_exists(session: db_dep, indexes_data: list[IndexData], admin_id: admin_id_dep) -> list[IndexData]:
+    sql_indexes_in_db = """
         SELECT schemaname as schema_name, tablename as table_name, indexname as index_name
         FROM pg_indexes
         WHERE indexname = ANY(:index_names);
@@ -64,7 +63,7 @@ async def indexes_are_exists(indexes_data: list[IndexData], admin_id: int = Depe
         for index_data in indexes_data
     ]
     index_names = [index_data.index_name for index_data in indexes_data]
-    db_indexes = await db.execute(text(sql_indexes_in_db), {"index_names": index_names})
+    db_indexes = await session.execute(text(sql_indexes_in_db), {"index_names": index_names})
     db_indexes = db_indexes.mappings().fetchall()
 
     result = []
@@ -77,7 +76,7 @@ async def indexes_are_exists(indexes_data: list[IndexData], admin_id: int = Depe
 @router.post('/tables/vacuum_full')
 async def vacuum_full_tables(
         tables_data: list[TableData],
-        admin_id: int = Depends(get_admin_id),
+        admin_id: admin_id_dep,
         conn: AsyncSession = Depends(get_autocommit_conn),
 ):
     sql_tables_in_db = """
@@ -124,10 +123,10 @@ async def vacuum_full_tables(
 
 @router.post('/tables/vacuum_full_background')
 async def background_vacuum_full_tables(
+        session: db_dep,
         tables_data: list[TableData],
         background_tasks: BackgroundTasks,
-        admin_id: int = Depends(get_admin_id),
-        db: AsyncSession = Depends(get_db)
+        admin_id: admin_id_dep
 ):
     async def process_vacuum_full_tables(tables_data: list[TableData], ):
         async with engine.connect() as conn:
@@ -158,7 +157,7 @@ async def background_vacuum_full_tables(
     ]
 
     table_names = [table_data.table_name for table_data in tables_data]
-    db_tables = await db.execute(text(sql_tables_in_db), {"table_names": table_names})
+    db_tables = await session.execute(text(sql_tables_in_db), {"table_names": table_names})
     db_tables = db_tables.mappings().fetchall()
     db_tables = [dict(db_table) for db_table in db_tables]
 
@@ -173,16 +172,16 @@ async def background_vacuum_full_tables(
 
     background_tasks.add_task(process_vacuum_full_tables, tables_data)
 
-    return {"result": f"VACUUM FULL started", "tables": tables_data}
+    return {"result": "VACUUM FULL started", "tables": tables_data}
 
 
 @router.post('/indexes/reindex')
 async def reindex_indexes(
         indexes_data: list[IndexData],
-        admin_id: int = Depends(get_admin_id),
+        admin_id: admin_id_dep,
         conn: AsyncSession = Depends(get_autocommit_conn),
 ):
-    sql_indexes_in_db = f"""
+    sql_indexes_in_db = """
             SELECT schemaname as schema_name, tablename as table_name, indexname as index_name
             FROM pg_indexes
             WHERE indexname = ANY(:index_names);
@@ -225,10 +224,10 @@ async def reindex_indexes(
 
 @router.post('/indexes/reindex_background')
 async def background_reindex_indexes(
+        session: db_dep,
         indexes_data: list[IndexData],
         background_tasks: BackgroundTasks,
-        admin_id: int = Depends(get_admin_id),
-        db: AsyncSession = Depends(get_db)
+        admin_id: admin_id_dep
 ):
     async def process_reindex_indexes(indexes_data: list[IndexData]):
         async with engine.connect() as conn:
@@ -245,7 +244,7 @@ async def background_reindex_indexes(
                 background_tasks_logger.debug(
                     f"End reindex for index {index_data} ({execution_time_sec}s)")
 
-    sql_indexes_in_db = f"""
+    sql_indexes_in_db = """
             SELECT schemaname as schema_name, tablename as table_name, indexname as index_name
             FROM pg_indexes
             WHERE indexname = ANY(:index_names);
@@ -258,7 +257,7 @@ async def background_reindex_indexes(
     ]
 
     index_names = [index_data.index_name for index_data in indexes_data]
-    db_indexes = await db.execute(text(sql_indexes_in_db), {"index_names": index_names})
+    db_indexes = await session.execute(text(sql_indexes_in_db), {"index_names": index_names})
     db_indexes = db_indexes.mappings().fetchall()
     db_indexes = [dict(db_index) for db_index in db_indexes]
 
@@ -273,4 +272,4 @@ async def background_reindex_indexes(
 
     background_tasks.add_task(process_reindex_indexes, indexes_data)
 
-    return {"result": f"Reindex started", "indexes": indexes_data}
+    return {"result": "Reindex started", "indexes": indexes_data}

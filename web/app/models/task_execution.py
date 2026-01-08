@@ -1,10 +1,8 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import CheckConstraint, String, ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey
 from typing import TYPE_CHECKING
-import datetime as dt
 
 from app.core.database import Base
-from app.core.config import settings
 
 if TYPE_CHECKING:
     from app.models import User, Day, Task

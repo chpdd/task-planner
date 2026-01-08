@@ -5,4 +5,13 @@ from app.models.task_execution import TaskExecution
 from app.models.failed_task import FailedTask
 from app.models.manual_day import ManualDay
 
-from app.models.user import Base
+from app.models.user import Base  # noqa: F401
+
+__all__ = [
+    'User',
+    'Day',
+    'Task',
+    'TaskExecution',
+    'FailedTask',
+    'ManualDay'
+]

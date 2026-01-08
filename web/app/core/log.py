@@ -1,6 +1,5 @@
 import time
 import logging
-from sys import stderr
 
 
 class TZFormatter(logging.Formatter):

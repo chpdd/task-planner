@@ -1,8 +1,7 @@
 from pydantic import Field
-import datetime as dt
 from typing import Annotated
 
-from app.core.config import BaseSchema, settings
+from app.core.config import BaseSchema
 from app.schemas.task import TaskSchema
 
 

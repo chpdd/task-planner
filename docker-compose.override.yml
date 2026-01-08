@@ -1,0 +1,9 @@
+services:
+  web:
+    # In development, we mount the code to allow hot-reloading
+    volumes:
+      - ./web:/app
+    # We can also override command to run with reload if supported, 
+    # but python start.py usually does uvicorn run
+    environment:
+      - MODE=dev

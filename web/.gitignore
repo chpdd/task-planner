@@ -1,3 +1,4 @@
 .env
+.test.env
 console_app/data_files
-TODO
+poetry.lock

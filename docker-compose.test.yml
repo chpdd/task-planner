@@ -1,0 +1,15 @@
+services:
+  web:
+    build:
+      target: test
+    command: pytest
+    volumes:
+      - ./web:/app
+    environment:
+      - MODE=test
+      - POSTGRES_HOST=postgres
+      # Override DB name for testing if needed
+      # - POSTGRES_DB=test_db 
+    depends_on:
+      postgres:
+        condition: service_started

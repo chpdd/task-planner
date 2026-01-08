@@ -224,6 +224,7 @@ class Planner:
             cls.importance_allocation, cls.interest_allocation, cls.interest_importance_allocation,
             cls.points_allocation, cls.force_procrastination_allocation
         ]
+        return result
 
     def custom_allocation(self, func, rev_bool: bool = False) -> None:
         sorted_tasks = sorted(self.tasks, key=func, reverse=rev_bool)

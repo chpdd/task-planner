@@ -3,25 +3,24 @@ services:
     build:
       context: web
       dockerfile: Dockerfile
+      target: prod
     environment:
       - TZ=Europe/Moscow
     ports:
       - "8000:8000"
     command: python3 start.py
-    volumes:
-      - ./web:/web
     env_file:
       - web/.env
-#      logging:
-#        driver: fluentd
-#        options:
-#          fluentd-address: 0.0.0.0:24224
-#          fluentd-sub-second-precision: "true"
-#          tag: web.logs
-#        fluentd:
+    #      logging:
+    #        driver: fluentd
+    #        options:
+    #          fluentd-address: 0.0.0.0:24224
+    #          fluentd-sub-second-precision: "true"
+    #          tag: web.logs
+    #        fluentd:
     depends_on:
       - postgres
-#        condition: service_healthy
+  #      - elasticsearch # Uncomment if needed
 
   postgres:
     image: postgres:16.3
@@ -73,12 +72,12 @@ services:
       dockerfile: Dockerfile
     environment:
       - TZ=Europe/Moscow
-#    volumes:
-#      - ./fluentd/fluentd.conf:/fluentd/etc/fluent.conf
-#      - ./logs:/app/logs  # Fluentd будет читать логи
+    #    volumes:
+    #      - ./fluentd/fluentd.conf:/fluentd/etc/fluent.conf
+    #      - ./logs:/app/logs  # Fluentd будет читать логи
     ports:
-      - "24224:24224"  # TCP input
-      - "24224:24224/udp"  # UDP input
+      - "24224:24224" # TCP input
+      - "24224:24224/udp" # UDP input
     healthcheck:
       test: [ "CMD-SHELL", "nc -z 127.0.0.1 24224" ]
       interval: 5s

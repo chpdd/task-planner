@@ -1,10 +1,9 @@
-from fastapi import Depends, APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 
 from app.core import security
-from app.core.dependencies import get_db
+from app.core.dependencies import db_dep
 
 from app.models import User
 from app.crud import user_crud
@@ -14,7 +13,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/register")
-async def register_user(auth_schema: auth.AuthSchema, session: AsyncSession = Depends(get_db)):
+async def register_user(auth_schema: auth.AuthSchema, session: db_dep):
     user_schema = await user_crud.schema_get_by_name(session, auth_schema.name)
     if user_schema is None:
         raise HTTPException(detail="This username is already taken", status_code=status.HTTP_409_CONFLICT)
@@ -27,7 +26,7 @@ async def register_user(auth_schema: auth.AuthSchema, session: AsyncSession = De
 
 @router.post("/login")
 async def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-                     session: AsyncSession = Depends(get_db)):
+                     session: db_dep):
     user = await user_crud.get_by_name(session, form_data.username)
     if not security.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this name and password not found")

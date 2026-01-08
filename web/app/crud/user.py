@@ -1,6 +1,3 @@
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
 
 from app.schemas.user import CreateUserSchema, UserSchema
 from app.models import User

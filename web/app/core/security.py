@@ -4,9 +4,7 @@ import fastapi.security
 
 from passlib.context import CryptContext
 from pydantic import Field
-from fastapi import Depends, HTTPException, status
 from typing import Annotated
-from sqlalchemy import select
 
 from app.core.config import BaseSchema, settings
 

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from fastapi import HTTPException, status
 
-from typing import TypeVar, Generic, Iterable
+from typing import Iterable
 
 from app.core.database import Base
 from app.core.config import BaseSchema
