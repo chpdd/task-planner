@@ -7,10 +7,10 @@ services:
     environment:
       - TZ=Europe/Moscow
     ports:
-      - "8000:8000"
+      - "8100:8100"
     command: python3 start.py
     env_file:
-      - web/.env
+      - .env
     #      logging:
     #        driver: fluentd
     #        options:
@@ -20,7 +20,50 @@ services:
     #        fluentd:
     depends_on:
       - postgres
-  #      - elasticsearch # Uncomment if needed
+
+  auth:
+    build:
+      context: auth
+      dockerfile: Dockerfile
+      target: prod
+    environment:
+      - TZ=Europe/Moscow
+    ports:
+      - "8001:8001"
+    command: python3 start.py
+    env_file:
+      - .env
+    #      logging:
+    #        driver: fluentd
+    #        options:
+    #          fluentd-address: 0.0.0.0:24224
+    #          fluentd-sub-second-precision: "true"
+    #          tag: web.logs
+    #        fluentd:
+    depends_on:
+      - postgres
+
+  admin:
+    build:
+      context: admin
+      dockerfile: Dockerfile
+      target: prod
+    environment:
+      - TZ=Europe/Moscow
+    ports:
+      - "8002:8002"
+    command: python3 start.py
+    env_file:
+      - .env
+    #      logging:
+    #        driver: fluentd
+    #        options:
+    #          fluentd-address: 0.0.0.0:24224
+    #          fluentd-sub-second-precision: "true"
+    #          tag: web.logs
+    #        fluentd:
+    depends_on:
+      - postgres
 
   postgres:
     image: postgres:16.3
@@ -28,9 +71,6 @@ services:
       - "5432:5432"
     environment:
       TZ: Europe/Moscow/
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: 12344321
-      POSTGRES_DB: task_planner_db
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - ./postgres/data:/var/lib/postgresql/data
@@ -74,7 +114,7 @@ services:
       - TZ=Europe/Moscow
     #    volumes:
     #      - ./fluentd/fluentd.conf:/fluentd/etc/fluent.conf
-    #      - ./logs:/app/logs  # Fluentd будет читать логи
+    #      - ./logs:/src/logs  # Fluentd будет читать логи
     ports:
       - "24224:24224" # TCP input
       - "24224:24224/udp" # UDP input

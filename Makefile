@@ -24,14 +24,26 @@ help: ## Show this help message
 	@echo "  lint     Run code linting (ruff)"
 	@echo "  clean    Remove all containers, networks, and volumes"
 
+full:
+	$(DC_DEV) up -d
+
 dev: ## Run development environment
-	$(DC_DEV) up --build
+	$(DC_DEV) up web -d
+
+dev-build:
+	$(DC_DEV) up web -d --build
 
 prod: ## Run production verification
-	$(DC_PROD) up --build
+	$(DC_PROD) up -d
+
+prod-build:
+	$(DC_PROD) up -d --build
 
 test: ## Run tests
-	$(DC_TEST) up --build --exit-code-from web
+	$(DC_TEST) run --rm --build web poetry run pytest -v
+
+test-coverage:
+	$(DC_TEST) run --rm web poetry run pytest --cov=.
 
 down: ## Stop containers
 	$(DC) down --remove-orphans
@@ -57,3 +69,6 @@ clean: ## Nuke everything
 
 db-shell: ## Enter Postgres shell
 	$(DC) exec postgres psql -U admin -d task_planner_db
+
+alembic-upgrade:
+	$(DC_DEV) run --rm web poetry run alembic upgrade head

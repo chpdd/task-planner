@@ -1,9 +1,20 @@
 services:
   web:
-    # In development, we mount the code to allow hot-reloading
     volumes:
       - ./web:/app
-    # We can also override command to run with reload if supported, 
-    # but python start.py usually does uvicorn run
+    working_dir: /app
+    environment:
+      - MODE=dev
+      - PYTHONPATH=/src
+
+  auth:
+    volumes:
+      - ./auth:/app
+    environment:
+      - MODE=dev
+
+  admin:
+    volumes:
+      - ./admin:/app
     environment:
       - MODE=dev

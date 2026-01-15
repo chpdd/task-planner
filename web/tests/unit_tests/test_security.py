@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.security import FullPayload, create_access_token, decode_access_token
+from src.core.security import FullPayload, create_access_token, decode_access_token
 
 data_parametrize = pytest.mark.parametrize(
     ['data', 'expected'],

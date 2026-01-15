@@ -1,13 +1,13 @@
 import uvicorn
 
-from app.core.log import log_config
+from src.core.log import log_config
 
 if __name__ == "__main__":
     # uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True, access_log=False, log_config=log_config)
     uvicorn.run(
-        "app.main:app",
+        "src.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8100,
         reload=True,
         access_log=False,
         log_config=log_config,

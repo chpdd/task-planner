@@ -4,12 +4,14 @@ services:
       target: test
     command: pytest
     volumes:
-      - ./web:/app
+      - ./web:/src
+    working_dir: /src
     environment:
       - MODE=test
-      - POSTGRES_HOST=postgres
-      # Override DB name for testing if needed
-      # - POSTGRES_DB=test_db 
+      - DB_HOST=postgres
+      - PYTHONPATH=/src
+    env_file:
+      - .test.env
     depends_on:
       postgres:
         condition: service_started
