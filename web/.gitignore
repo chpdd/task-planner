@@ -1,5 +1,0 @@
-.env
-.test.env
-console_app/data_files
-poetry.lock
-.venv

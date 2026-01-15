@@ -1,74 +1,18 @@
-# Makefile for Task Planner
+# Makefile for Task Planner Library
 
-# Variables
-DC = docker compose
-DC_DEV = $(DC)
-DC_PROD = $(DC) -f docker-compose.yml
-DC_TEST = $(DC) -f docker-compose.yml -f docker-compose.test.yml
+.PHONY: install test lint clean build
 
-.PHONY: dev prod test down build help logs shell lint clean db-shell
-
-default: dev
-
-help: ## Show this help message
-	@echo "Usage: make [target]"
-	@echo ""
-	@echo "Targets:"
-	@echo "  dev      Run development environment (with hot reload)"
-	@echo "  prod     Run production verification (strict build)"
-	@echo "  test     Run tests"
-	@echo "  build    Build/Rebuild all images"
-	@echo "  down     Stop all containers"
-	@echo "  logs     Follow logs for all services"
-	@echo "  shell    Enter the web container shell"
-	@echo "  lint     Run code linting (ruff)"
-	@echo "  clean    Remove all containers, networks, and volumes"
-
-full:
-	$(DC_DEV) up -d
-
-dev: ## Run development environment
-	$(DC_DEV) up web -d
-
-dev-build:
-	$(DC_DEV) up web -d --build
-
-prod: ## Run production verification
-	$(DC_PROD) up -d
-
-prod-build:
-	$(DC_PROD) up -d --build
+install: ## Install dependencies
+	poetry install
 
 test: ## Run tests
-	$(DC_TEST) run --rm --build web poetry run pytest -v
-
-test-coverage:
-	$(DC_TEST) run --rm web poetry run pytest --cov=.
-
-down: ## Stop containers
-	$(DC) down --remove-orphans
-
-build: ## Build images
-	$(DC) build
-
-logs: ## Follow logs
-	$(DC) logs -f
-
-shell: ## Enter web container
-	$(DC_DEV) exec web bash
+	poetry run pytest
 
 lint: ## Run linting
-	$(DC_DEV) run --rm web poetry run ruff check .
+	poetry run ruff check .
 
-lint-watch:
-	$(DC_DEV) run --rm web poetry run ruff check . -w
+clean: ## Clean build artifacts
+	rm -rf dist/ build/ *.egg-info
 
-
-clean: ## Nuke everything
-	$(DC) down -v --remove-orphans --rmi local
-
-db-shell: ## Enter Postgres shell
-	$(DC) exec postgres psql -U admin -d task_planner_db
-
-alembic-upgrade:
-	$(DC_DEV) run --rm web poetry run alembic upgrade head
+build: clean ## Build package
+	poetry build

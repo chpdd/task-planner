@@ -1,127 +1,74 @@
-# Task Planner
+# Task Planner Library
 
-App for intelligent task scheduling and daily planning.  
-This project implements a task planner library that helps organize and prioritize tasks based on multiple parameters such as importance, interest, workload, and deadlines. Users can define their daily available time and let the bot suggest an optimal schedule.
+Core logic and algorithms for intelligent task scheduling and daily planning.  
+This library helps organize and prioritize tasks based on multiple parameters such as importance, interest level, workload, and deadlines.
 
-## 🧠 Features
+## 📦 Installation
 
-The Task Planner is designed to help you:
+To use this library in your own projects:
 
-- 📅 Add tasks with metadata including interest level, importance, estimated work time, and deadline.
-- 🤖 Automatically calculate an optimal daily task schedule based on available working hours.
-- ⚙️ Customize daily available time per day.
-- 📈 Prioritize tasks using a scoring model combining multiple task attributes.
+### 1. Using Poetry (Recommended)
 
-## 🚀 Motivation
-
-I developed this app when I had *a massive list of tasks and needed help deciding what to do each day*. The bot uses a simple algorithm to balance urgency, importance, and personal interest, resulting in schedules that fit within daily constraints.
-
----
-
-## 🧩 How It Works
-
-Each task contains these parameters:
-
-| Parameter    | Description                                              |
-|--------------|----------------------------------------------------------|
-| Interest     | How much you *want* to do the task                       |
-| Work Time    | Estimated time needed to complete the task               |
-| Importance   | How critical the task is                                  |
-| Deadline     | By when the task needs to be completed                   |
-| Available Time | Hours you plan to work each day                        |
-
-The app then uses these values to determine which tasks should be scheduled earlier and which can wait, optimizing for a balanced daily workflow.
-
----
-
-## 📦 Project Structure
-
+Add it as a Git dependency in your `pyproject.toml`:
+```bash
+poetry add git+https://github.com/chpdd/task-planner.git
 ```
 
-/
-├── fluentd/
-├── postgres/
-│   └── scripts/
-├── web/
-├── docker-compose.yml
+Or for local development (if the repo is in a neighboring folder):
+```bash
+poetry add ../task-planner
+```
+
+### 2. Using Pip
+
+```bash
+pip install git+https://github.com/chpdd/task-planner.git
+```
+
+## 🛠 Project Structure
+
+The project uses the standard `src` layout:
+```
+task-planner/
+├── pyproject.toml
 ├── README.md
-└── TODO
+└── src/
+    └── task_planner/
+        ├── __init__.py    # Exports Planner, Task, Day, etc.
+        ├── planner.py     # Main allocation logic
+        ├── calendar.py    # Calendar management
+        ├── task.py        # Task models
+        └── ...
+```
 
-````
+## 🚀 Quick Start
 
-- **fluentd/** — Logging and data collection configuration (if used).
-- **postgres/scripts/** — Database initialization and schema scripts.
-- **web/** — Web components or admin interfaces (if applicable).
-- **docker-compose.yml** — Development and deployment configuration.
+```python
+from task_planner import Planner, Task, Day
+import datetime as dt
 
----
+# 1. Create tasks
+tasks = [
+    Task(name="Project Alpha", importance=8, interest=9, work_hours=4, deadline=dt.date.today() + dt.timedelta(days=2)),
+    Task(name="Admin Work", importance=4, interest=2, work_hours=2)
+]
 
-## 📥 Installation
+# 2. Setup planner
+planner = Planner(tasks=tasks, start_date=dt.date.today())
 
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/chpdd/task-planner.git
-   cd task-planner
-   ```
+# 3. Calculate schedule
+planner.importance_allocation()
 
-2. **Configure environment**
+# 4. View results
+print(planner.calendar_str_tables_rus())
+```
 
-   * Set up a `.env` file with your Telegram bot token and database credentials.
-   * Example variables:
+## ⚖️ Allocation Methods
 
-     ```env
-     TELEGRAM_TOKEN=your_bot_token
-     DATABASE_URL=postgres://user:password@host:port/dbname
-     ```
-
-3. **Run with Docker**
-
-   ```bash
-   docker-compose up --build
-   ```
-
-> You can also run individual components locally (bot, database, web) if you prefer.
-
----
-
-## 📝 Usage
-
-Start the bot and use Telegram commands to interact:
-
-* `/add` — Add a new task
-* `/list` — Show all tasks
-* `/schedule` — Generate a daily plan
-* `/delete` — Remove a task
-
-*(Add actual supported commands once defined in code.)*
+- `importance_allocation()`: Balances importance and deadlines.
+- `interest_allocation()`: Prioritizes what you enjoy doing most.
+- `procrastination_allocation()`: Pushes tasks as close to deadlines as possible.
+- `points_allocation()`: Score-based prioritization.
 
 ---
-
-## 🎯 Example Scenario
-
-1. Add a task:
-
-   ```text
-   /add Finish report | interest:7, importance:9, work_time:3, deadline:2025-12-20
-   ```
-2. Add more tasks.
-3. Run the scheduler:
-
-   ```text
-   /schedule
-   ```
-4. The app returns an ordered list of tasks for today.
-
----
-
-## 📌 Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/xyz`)
-3. Commit your changes
-4. Push to your fork and open a Pull Request
-
----
-
+*Created by [chpdd](https://github.com/chpdd)*
