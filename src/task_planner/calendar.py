@@ -1,68 +1,49 @@
 import datetime as dt
+from typing import Self
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 from task_planner.day import Day, Task
+from task_planner.settings import settings
 
 
-class Calendar:
-    def __init__(self, manual_days: [Day] = None, start_date: dt.date = dt.date.today(),
-                 dflt_day_work_hours: int = 4, dflt_task_work_hours: int = 2, max_date: dt.date = None) -> None:
-        self._manual_days: [Day] = [] if manual_days is None else manual_days
-        self._manual_date_work_hours: {dt.date: int} = {day.date: day.work_hours for day in self.manual_days}
-        self._dflt_day_work_hours: int = dflt_day_work_hours
-        self._dflt_task_work_hours: int = dflt_task_work_hours
-        self._start_date: dt.date = start_date
-        self._days: [Day] = []
-        self._near_fillable_day_index: int = -1
+class Calendar(BaseModel):
+    model_config = ConfigDict(frozen=False, arbitrary_types_allowed=True)
 
-        self.init_days(max_date)
+    manual_days: list[Day] = Field(default_factory=list)
+    start_date: dt.date = Field(default_factory=dt.date.today)
+    max_date: dt.date | None = Field(default=None)
+
+    _days: list[Day] = PrivateAttr(default_factory=list)
+    _near_fillable_day_index: int = PrivateAttr(default=-1)
+    _manual_date_work_hours: dict[dt.date, int] = PrivateAttr(default_factory=dict)
+
+    @model_validator(mode='after')
+    def changes_validator(self) -> Self:
+        self._manual_date_work_hours = {day.date: day.work_hours for day in self.manual_days}
+        if self.max_date is None:
+            self.max_date = self.start_date
+        while self.last_added_day_date <= self.max_date:
+            self.add_day()
+        self._near_fillable_day_index = -1
+        self.next_fillable_day()
+        return self
 
     def __getitem__(self, index: int) -> Day:
-        return self._days[index]
+        return self.days[index]
 
     def __len__(self) -> int:
-        return len(self._days)
+        return len(self.days)
+
+    def __iter__(self):
+        return iter(self.days)
 
     @property
-    def start_date(self) -> dt.date:
-        return self._start_date
+    def days(self) -> list[Day]:
+        return self._days
 
     @property
     def near_fillable_day(self) -> Day:
-        return self._days[self._near_fillable_day_index]
-
-    @property
-    def dflt_day_work_hours(self) -> int:
-        return self._dflt_day_work_hours
-
-    @dflt_day_work_hours.setter
-    def dflt_day_work_hours(self, work_hours: int) -> None:
-        self._dflt_day_work_hours = work_hours
-
-    @property
-    def dflt_task_work_hours(self) -> int:
-        return self._dflt_task_work_hours
-
-    @dflt_task_work_hours.setter
-    def dflt_task_work_hours(self, work_hours: int) -> None:
-        self._dflt_task_work_hours = work_hours
-
-    @property
-    def manual_days(self) -> [Day]:
-        return self._manual_days
-
-    @manual_days.setter
-    def manual_days(self, manual_days: [Day]) -> None:
-        self._manual_days = manual_days
-        self._manual_date_work_hours: {dt.date: int} = {day.date: day.work_hours for day in manual_days}
-        self.init_days()
-
-    @property
-    def manual_date_work_hours(self) -> {dt.date: int}:
-        return self._manual_date_work_hours
-
-    @property
-    def days(self) -> [Day]:
-        return self._days
+        return self.days[self._near_fillable_day_index]
 
     @property
     def last_added_day_date(self) -> dt.date:
@@ -70,15 +51,7 @@ class Calendar:
             return self.days[-1].date
         return self.start_date - dt.timedelta(days=1)
 
-    def init_days(self, max_date: dt.date = None) -> None:
-        max_date = self.start_date if max_date is None else max_date
-        self._days: [Day] = []
-        while self.last_added_day_date <= max_date:
-            self.add_day()
-        self._near_fillable_day_index: int = -1
-        self.next_fillable_day()
-
-    def clean_calendar(self):
+    def clean_calendar(self) -> None:
         for day in self.days:
             day.clean_schedule()
         self._near_fillable_day_index = -1
@@ -86,7 +59,7 @@ class Calendar:
 
     def add_day(self) -> None:
         date = self.last_added_day_date + dt.timedelta(days=1)
-        work_hours = self.manual_date_work_hours.get(date, self.dflt_day_work_hours)
+        work_hours = self._manual_date_work_hours.get(date, settings.dflt_day_work_hours)
         self.days.append(Day(date=date, work_hours=work_hours))
 
     def next_fillable_day(self) -> None:
@@ -116,7 +89,7 @@ class Calendar:
             else:
                 free_hours_flag = True
 
-    def add_task(self, task: Task, work_hours: int) -> None:
+    def add_task(self, task: Task, work_hours: int):
         day = self.near_fillable_day
         while work_hours:
             while day.is_task_filled():
@@ -124,7 +97,7 @@ class Calendar:
                 day = self.near_fillable_day
             work_hours = day.add_task(task, work_hours)
 
-    def add_task_before_date(self, task: Task, work_hours: int, date: dt.date) -> None:
+    def add_task_before_date(self, task: Task, work_hours: int, date: dt.date):
         day_i = len(self.days) - 1
         while self.days[day_i].date >= date:
             day_i -= 1

@@ -1,19 +1,37 @@
+from typing import ClassVar
 import datetime as dt
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from task_planner.utils import date_to_normal_str
+from task_planner.settings import settings
 
 
-class Task:
-    __id_counter = 0
+class Task(BaseModel):
+    model_config = ConfigDict(frozen=False, arbitrary_types_allowed=True)
 
-    def __init__(self, name: str, deadline: dt.date = None, interest: int = 5, work_hours: int = 2,
-                 importance: int = 5) -> None:
-        self._id: int = Task.__generate_id()
-        self._name: str = name
-        self._deadline: dt.date = deadline
-        self._interest: int = interest
-        self._work_hours: int = work_hours
-        self._importance: int = importance
+    _id_counter: ClassVar[int] = 0
+
+    id: int | None = Field(default=None)
+    name: str
+    deadline: dt.date | None = None
+    interest: int = 5
+    work_hours: int = Field(default_factory=lambda: settings.dflt_task_work_hours)
+    importance: int = 5
+
+    @model_validator(mode='after')
+    def sync_id(self) -> 'Task':
+        if self.id is None:
+            self.id = Task._generate_id()
+        else:
+            # If ID is provided, ensure counter is ahead of it to prevent conflicts
+            if self.id >= Task._id_counter:
+                Task._id_counter = self.id + 1
+        return self
+
+    @classmethod
+    def _generate_id(cls) -> int:
+        task_id = cls._id_counter
+        cls._id_counter += 1
+        return task_id
 
     def __str__(self) -> str:
         return (f"Task with id: {self.id}, name: {self.name}, deadline: {self.deadline}, "
@@ -25,69 +43,17 @@ class Task:
                 f"interest={self.interest}, work_hours={self.work_hours}, "
                 f"importance={self.importance})")
 
-    @classmethod
-    def __generate_id(cls) -> int:
-        task_id = cls.__id_counter
-        cls.__id_counter += 1
-        return task_id
+    def __hash__(self):
+        return hash(self.id)
 
-    @property
-    def id(self) -> int:
-        return self._id
-
-    @property
-    def interest(self) -> int:
-        return self._interest
-
-    @interest.setter
-    def interest(self, interest) -> None:
-        self._interest = interest
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, name) -> None:
-        self._name = name
-
-    @property
-    def deadline(self) -> dt.date:
-        return self._deadline
-
-    @deadline.setter
-    def deadline(self, deadline: dt.date) -> None:
-        self._deadline = deadline
-
-    @property
-    def importance(self) -> int:
-        return self._importance
-
-    @importance.setter
-    def importance(self, importance: int) -> None:
-        self._importance = importance
-
-    @property
-    def work_hours(self) -> int:
-        return self._work_hours
-
-    @work_hours.setter
-    def work_hours(self, work_hours: int) -> None:
-        self._work_hours = work_hours
+    def __eq__(self, other):
+        if not isinstance(other, Task):
+            return False
+        return self.id == other.id
 
     @property
     def sum_interest(self) -> int:
-        return self._work_hours * self.interest
+        return self.work_hours * self.interest
 
     def has_deadline(self) -> bool:
-        if self.deadline is not None:
-            return True
-        return False
-
-    def str_present_rus(self) -> str:
-        present_str = f"{self.id}. {self.name},"
-        if self.deadline:
-            present_str += f" дедлайн {date_to_normal_str(self.deadline)}"
-        present_str += (f" интерес: {self.interest}/10, время выполнения в часах: {self.work_hours},"
-                        f" важность: {self.importance}")
-        return present_str
+        return self.deadline is not None
